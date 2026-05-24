@@ -6,7 +6,7 @@ import './App.css'
 import Principal from './components/common/Principal'
 import Footer from './components/Footer'
 import Modelo from './components/Modelo'
-
+import EntradasSimulador from './components/EntradasSimulador'
 function App() {
   const [count, setCount] = useState(0)
 
@@ -14,6 +14,7 @@ function App() {
       <>
         <Principal/>
         <Modelo/>
+        <EntradasSimulador/>
         <Footer/>
       </>
   )

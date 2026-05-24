@@ -4,7 +4,7 @@ const Footer = () => {
     return (
         <div>
             <section className='bg-dark text-center text-light py-5'>
-            <span> &copy; Todos los derechos Reservados- MauricioSor</span>
+            <span> &copy; Todos los derechos Reservados- G04</span>
             </section>
         </div>
     );

@@ -29,8 +29,8 @@ const Principal = () => {
                         Nave Tierra - San Miguel de Tucumán
                     </Card.Subtitle>
                 </Card.Body>
-                <Card.Footer className="text-muted border-0 py-3" style={{ background: 'rgba(0,0,0,0.2)' }}>
-                    <small>Investigación Operativa - Grupo 04</small>
+                <Card.Footer className="text-muted border-0 py-3 " style={{ background: 'rgba(0,0,0,0.2)' }}>
+                    <small className='text-white'>Investigación Operativa - Grupo 04</small>
                 </Card.Footer>
             </Card>
         </Container>
