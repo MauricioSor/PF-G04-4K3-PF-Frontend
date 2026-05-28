@@ -1,0 +1,13 @@
+# Configuración de deploy en Netlify (sitio estático Vite, 100% client-side).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Fallback SPA: cualquier ruta sirve index.html (no rompe si se agregan rutas).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
