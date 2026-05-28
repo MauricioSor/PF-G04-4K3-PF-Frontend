@@ -1,5 +1,6 @@
 import { Table } from 'react-bootstrap';
 import { fmtInt, fmt2 } from './format.js';
+import EquiposPorDia from './graficos/EquiposPorDia.jsx';
 
 const DesgloseDiario = ({ diario }) => {
     if (!diario || diario.length === 0) return null;
@@ -14,8 +15,14 @@ const DesgloseDiario = ({ diario }) => {
     }), { lotes: 0, equipos: 0, cs: 0, cr: 0, er: 0, pesoDia: 0, ef: 0, ed: 0, ei: 0, pe: 0, aguaDia: 0 });
 
     return (
-        <div className="overflow-auto">
+        <div>
             <p className="text-secondary mb-3">Detalle por jornada (cada fila es un día de operación).</p>
+
+            <div className="mb-4">
+                <EquiposPorDia diario={diario} />
+            </div>
+
+            <div className="overflow-auto">
             <Table striped bordered hover variant="dark" size="sm" style={{ minWidth: '800px' }}>
                 <thead>
                     <tr>
@@ -60,6 +67,7 @@ const DesgloseDiario = ({ diario }) => {
                     </tr>
                 </tfoot>
             </Table>
+            </div>
         </div>
     );
 };

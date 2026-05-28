@@ -1,4 +1,5 @@
 import './App.css'
+import './components/resultados/graficos/chartSetup.js'
 import Principal from './components/common/Principal'
 import Footer from './components/Footer'
 import Modelo from './components/Modelo'

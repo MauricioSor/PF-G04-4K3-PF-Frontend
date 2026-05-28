@@ -16,7 +16,7 @@ Universidad Tecnológica Nacional · Facultad Regional Tucumán · Comisión 4K3
 7. [Estructura del proyecto (archivos)](#7-estructura-del-proyecto-archivos)
 8. [Cómo correrlo](#8-cómo-correrlo)
 9. [Cómo usar la interfaz](#9-cómo-usar-la-interfaz)
-10. [Las cuatro ventanas de resultados](#10-las-cuatro-ventanas-de-resultados)
+10. [Las cinco ventanas de resultados](#10-las-cinco-ventanas-de-resultados)
 11. [Las tres decisiones automáticas del modelo](#11-las-tres-decisiones-automáticas-del-modelo)
 12. [Tests del motor](#12-tests-del-motor)
 13. [Deploy en Netlify](#13-deploy-en-netlify)
@@ -34,7 +34,7 @@ A partir de unos pocos parámetros que el usuario carga (semilla del generador a
 2. Usa esos números para sortear, día por día y equipo por equipo, qué pasa con cada residuo que llega al centro (tipo de dispositivo, peso, tiempos de proceso, destino, eficacia ambiental).
 3. Acumula todas las métricas que el cliente del centro necesita ver: equipos procesados por tipo, peso total, litros de agua no contaminada, incidentes de contaminación, tiempos totales de cada estación, etc.
 4. Evalúa **tres alternativas de decisión** (¿conviene contratar otro operario? ¿otro recepcionista? ¿abrir un segundo turno?) según los umbrales del modelo.
-5. Muestra todo en cuatro "ventanas" diferentes (pestañas): resumen mensual, desglose diario, grilla de eventos y decisiones.
+5. Muestra todo en cinco "ventanas" diferentes (pestañas): resumen mensual, desglose diario, grilla de eventos, decisiones y validación del generador. Incluye gráficos (donuts, barras, líneas, histograma) que permiten "ver" la simulación, no solo leerla.
 
 Todo corre **dentro del navegador** del usuario: no hay servidor, ni base de datos, ni llamadas a internet. Esto hace que la simulación sea instantánea, totalmente reproducible y muy fácil de desplegar.
 
@@ -226,6 +226,7 @@ Cada función devuelve no solo el valor, sino **también el `u` (o los `u`) que 
   - [React 19](https://react.dev/) — la UI declarativa.
   - [Vite 8](https://vitejs.dev/) — el bundler / dev server.
   - [React-Bootstrap 2](https://react-bootstrap.netlify.app/) + Bootstrap 5 — componentes visuales.
+  - [Chart.js 4](https://www.chartjs.org/) + [react-chartjs-2](https://react-chartjs-2.js.org/) — gráficos (donuts, barras, líneas, histograma).
   - [Vitest 4](https://vitest.dev/) — runner de tests del motor.
   - React Compiler activo (memoización automática).
 
@@ -258,14 +259,21 @@ PF-G04-4K3-PF-Frontend/
 │       ├── Footer.jsx                    Pie de página
 │       ├── Modelo.jsx                    Diagrama conceptual del sistema
 │       ├── EntradasSimulador.jsx         ◀── FORMULARIO DE PARÁMETROS
-│       └── resultados/                   ◀── LAS CUATRO VENTANAS
+│       └── resultados/                   ◀── LAS CINCO VENTANAS
 │           ├── ResultadosTabs.jsx        Contenedor con pestañas
-│           ├── ResumenMensual.jsx        Pestaña 1
-│           ├── DesgloseDiario.jsx        Pestaña 2
+│           ├── ResumenMensual.jsx        Pestaña 1 (tarjetas + donuts + línea)
+│           ├── DesgloseDiario.jsx        Pestaña 2 (barras apiladas + tabla)
 │           ├── GrillaEquipos.jsx         Pestaña 3 (vector de estado)
-│           ├── Decisiones.jsx            Pestaña 4
+│           ├── Decisiones.jsx            Pestaña 4 (3 tarjetas IF/THEN)
 │           ├── GlosarioVariables.jsx     Panel lateral con las siglas
-│           └── format.js                 Helpers de formato es-AR
+│           ├── format.js                 Helpers de formato es-AR
+│           └── graficos/                 ◀── GRÁFICOS (chart.js)
+│               ├── chartSetup.js         Registro de chart.js + defaults dark
+│               ├── ChartCard.jsx         Wrapper común (tarjeta + título)
+│               ├── Donuts.jsx            Donuts de distribución por tipo y destino
+│               ├── EquiposPorDia.jsx     Bar chart apilado (30 días)
+│               ├── AcumuladoMensual.jsx  Line chart con doble eje Y
+│               └── HistogramaUniforme.jsx Pestaña 5 (histograma del RNG)
 │
 ├── netlify.toml                  Configuración de deploy
 ├── package.json                  Dependencias y scripts npm
@@ -323,22 +331,27 @@ Mientras la simulación corre, el botón Ejecutar muestra un spinner.
 
 ---
 
-## 10. Las cuatro ventanas de resultados
+## 10. Las cinco ventanas de resultados
 
-El bloque de resultados muestra cuatro pestañas y, al costado, un **glosario sticky** con todas las siglas del modelo (no hace falta acordarse de memoria qué es cada una).
+El bloque de resultados muestra cinco pestañas y, al costado, un **glosario sticky** con todas las siglas del modelo (no hace falta acordarse de memoria qué es cada una).
 
 ### Pestaña 1 — Resumen mensual
 
-Tarjetas con los acumulados del mes, agrupados:
+Combina **tres bloques** que se leen de arriba hacia abajo:
 
-- **Producción**: TEP, CS, CR, ER, PT.
-- **Destinos del diagnóstico**: EF, ED, EI.
-- **Impacto ambiental y calidad**: TA (litros de agua), PE (incidentes).
-- **Tiempos acumulados**: TTR, TTD, TTDD, TT (todos en horas).
+1. **Donuts de distribuciones empíricas** (dos gráficos de torta): distribución por tipo de equipo (Servidor / Switch/Router / Hogareño) y por destino del diagnóstico (Reutilización / Desarme / Disposición). Al costado de cada donut se aclara la proporción teórica del modelo, así se puede comparar visualmente si la corrida respetó las probabilidades.
+2. **Tarjetas con los acumulados del mes**, agrupadas en:
+   - **Producción**: TEP, CS, CR, ER, PT.
+   - **Destinos del diagnóstico**: EF, ED, EI.
+   - **Impacto ambiental y calidad**: TA (litros de agua), PE (incidentes).
+   - **Tiempos acumulados**: TTR, TTD, TTDD, TT (todos en horas).
+3. **Line chart "Evolución acumulada"**: dos curvas con doble eje Y mostrando cómo crecen, día a día, los equipos procesados (TEP, eje izquierdo) y los litros de agua no contaminada (eje derecho).
 
 ### Pestaña 2 — Desglose diario
 
-Tabla de 30 filas (una por día), con: cantidad de lotes, equipos totales, equipos por tipo, peso del día, destinos, incidentes y litros de agua. Al pie hay una fila "Total" que valida la consistencia con el resumen.
+Arriba, un **bar chart apilado** con 30 barras (una por día), desglosadas por tipo de equipo. Permite "ver" la variabilidad de la Poisson(λ=6): algunos días caen más lotes que otros.
+
+Debajo, una **tabla de 30 filas** con cantidad de lotes, equipos totales, equipos por tipo, peso del día, destinos, incidentes y litros de agua. Al pie hay una fila "Total" que valida la consistencia con el resumen.
 
 ### Pestaña 3 — Grilla de eventos
 
@@ -362,6 +375,15 @@ Como son muchas filas, la pestaña tiene controles de **"Mostrar desde fila X / 
 ### Pestaña 4 — Decisiones
 
 Tres tarjetas, una por cada alternativa de decisión del modelo. Cada tarjeta muestra: la **condición** (ej.: `TT > 160 h`), el **valor real obtenido**, si **cumple** la condición (badge verde) o no (badge gris), y la **recomendación textual**.
+
+### Pestaña 5 — Generador
+
+Pestaña dedicada a **validar la calidad del generador pseudoaleatorio**. Muestra:
+
+- **Histograma** de los ~14.400 números `u` que la simulación efectivamente consumió, agrupados en 10 deciles (`0,0–0,1` ... `0,9–1,0`). Si el generador es uniforme, todas las barras deberían acercarse a la **línea punteada de frecuencia esperada** que se dibuja encima.
+- **Panel de estadísticas** al costado: cantidad de muestras, media muestral, media esperada (0,5), mínimo y máximo observados, frecuencia esperada por decil y desvío máximo respecto del esperado.
+
+Esta vista funciona como una **prueba estadística visual** del Congruencial Mixto sembrado y deja preparado el terreno para los tests formales de la *Clase 2 – Pruebas Estadísticas* (chi-cuadrado, Kolmogorov–Smirnov, etc.) que vienen más adelante.
 
 ---
 

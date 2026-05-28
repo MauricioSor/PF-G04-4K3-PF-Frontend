@@ -1,5 +1,7 @@
 import { Row, Col } from 'react-bootstrap';
 import { fmtInt, fmt2 } from './format.js';
+import Donuts from './graficos/Donuts.jsx';
+import AcumuladoMensual from './graficos/AcumuladoMensual.jsx';
 
 const StatCard = ({ icon, title, value, unit, color }) => (
     <div className="d-flex flex-column h-100 p-3" style={{
@@ -23,7 +25,7 @@ const SectionTitle = ({ children }) => (
     <h5 className="text-white fw-bold mt-4 mb-3" style={{ fontSize: '1rem' }}>{children}</h5>
 );
 
-const ResumenMensual = ({ resumen }) => {
+const ResumenMensual = ({ resumen, diario }) => {
     if (!resumen) return null;
     const r = resumen;
 
@@ -33,6 +35,9 @@ const ResumenMensual = ({ resumen }) => {
                 Resultados acumulados de <span className="text-white fw-bold">{r.dias}</span> días simulados
                 · <span className="text-white fw-bold">{fmtInt(r.totalLotes)}</span> lotes ingresados.
             </p>
+
+            <SectionTitle>Distribuciones empíricas</SectionTitle>
+            <Donuts resumen={r} />
 
             <SectionTitle>Producción</SectionTitle>
             <Row className="g-3">
@@ -63,6 +68,9 @@ const ResumenMensual = ({ resumen }) => {
                 <Col md={3} sm={6}><StatCard icon="🔧" title="Total desarme (TTDD)" value={fmt2(r.ttdd / 60)} unit="h" color="rgba(168,85,247,0.6)" /></Col>
                 <Col md={3} sm={6}><StatCard icon="⏱️" title="Tiempo total (TT = TTD+TTDD)" value={fmt2(r.ttHoras)} unit="h" color="rgba(16,185,129,0.6)" /></Col>
             </Row>
+
+            <SectionTitle>Evolución del mes</SectionTitle>
+            <AcumuladoMensual diario={diario} />
         </div>
     );
 };

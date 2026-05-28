@@ -4,6 +4,7 @@ import DesgloseDiario from './DesgloseDiario.jsx';
 import GrillaEquipos from './GrillaEquipos.jsx';
 import Decisiones from './Decisiones.jsx';
 import GlosarioVariables from './GlosarioVariables.jsx';
+import HistogramaUniforme from './graficos/HistogramaUniforme.jsx';
 
 // Contenedor de resultados en pestañas ("diferentes ventanas" para las capturas).
 const ResultadosTabs = ({ resultado }) => {
@@ -39,7 +40,7 @@ const ResultadosTabs = ({ resultado }) => {
                         <Card.Body className="p-4">
                             <Tabs defaultActiveKey="resumen" className="mb-4" variant="tabs">
                                 <Tab eventKey="resumen" title="📈 Resumen mensual">
-                                    <ResumenMensual resumen={resumen} />
+                                    <ResumenMensual resumen={resumen} diario={diario} />
                                 </Tab>
                                 <Tab eventKey="diario" title="📅 Desglose diario">
                                     <DesgloseDiario diario={diario} />
@@ -49,6 +50,9 @@ const ResultadosTabs = ({ resultado }) => {
                                 </Tab>
                                 <Tab eventKey="decisiones" title="✅ Decisiones">
                                     <Decisiones decisiones={decisiones} />
+                                </Tab>
+                                <Tab eventKey="generador" title="🎲 Generador">
+                                    <HistogramaUniforme grilla={grilla} />
                                 </Tab>
                             </Tabs>
                         </Card.Body>
