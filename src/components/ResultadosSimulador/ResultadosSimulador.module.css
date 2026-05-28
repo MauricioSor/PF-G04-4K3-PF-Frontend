@@ -1,0 +1,75 @@
+
+.resultsGrid {
+  display:               grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows:    auto minmax(440px, auto);
+  gap:                   16px;
+  align-items:           stretch;
+}
+
+.kpiRow {
+  display:         flex;
+  gap:             20px;
+  align-items:     center;
+  justify-content: space-around;
+  padding:         10px 0;
+}
+
+.kpiItem  { text-align: center; }
+
+.kpiLabel {
+  font-size:     0.72rem;
+  color:         var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.kpiValue {
+  font-size:   1.5rem;
+  font-weight: 800;
+  color:       var(--text);
+  line-height: 1;
+}
+
+/* Cards de decisión recomendada */
+.decisionItem {
+  display:       flex;
+  align-items:   center;
+  gap:           10px;
+  padding:       12px 14px;
+  background:    var(--bg-inner);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  font-size:     0.82rem;
+  font-weight:   500;
+  border:        1px solid var(--border);
+  transition:    background 0.2s, border-color 0.2s;
+}
+
+.decisionItem:last-child { margin-bottom: 0; }
+
+.decisionActive {
+  background:   rgba(0, 212, 200, 0.08);
+  border-color: var(--border-teal);
+  color:        var(--teal);
+}
+
+.decisionInactive {
+  background:      rgba(100, 116, 139, 0.07);
+  border-color:    var(--border);
+  color:           var(--text-muted);
+  text-decoration: line-through;
+  opacity:         0.6;
+}
+
+.decisionPlay {
+  width:           24px;
+  height:          24px;
+  border-radius:   50%;
+  background:      var(--teal);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  flex-shrink:     0;
+  font-size:       0.6rem;
+  color:           #07111f;
+}

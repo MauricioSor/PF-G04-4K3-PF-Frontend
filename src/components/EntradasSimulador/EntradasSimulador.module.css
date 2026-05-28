@@ -1,0 +1,117 @@
+.inputError {
+  display:    block;
+  font-size:  0.68rem;
+  color:      #f87171;
+  margin-top: 4px;
+  animation:  fadeIn 0.15s ease;
+}
+
+/* Grid de 3 columnas */
+.configGrid {
+  display:               grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px) minmax(220px, 260px);
+  gap:                   16px;
+  min-height:            0;
+  overflow-x:            auto;
+}
+
+/* Columna izquierda */
+.configLeft {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+}
+
+/* Fila de distribución */
+.distRow {
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+  padding:       7px 10px;
+  border-radius: var(--radius-sm);
+  font-size:     0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.distRow:last-child { border-bottom: none; }
+
+.distIcon {
+  width:           22px;
+  height:          22px;
+  border-radius:   5px;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  flex-shrink:     0;
+}
+
+.distName { flex: 1; color: var(--text); }
+.distVal  {
+  color:       var(--teal);
+  font-weight: 600;
+  font-size:   0.78rem;
+  font-family: monospace;
+}
+
+/* ── Sección de fórmula del método RNG ── */
+.formulaBox {
+  background:    rgba(168, 85, 247, 0.06);
+  border:        1px solid rgba(168, 85, 247, 0.2);
+  border-radius: var(--radius-sm);
+  padding:       12px 14px;
+  margin-top:    4px;
+}
+
+.formulaLabel {
+  font-size:      0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color:          #a855f7;
+  margin-bottom:  8px;
+  font-weight:    600;
+}
+
+.formulaExpr {
+  font-family: 'Courier New', monospace;
+  font-size:   0.82rem;
+  color:       var(--text);
+  font-weight: 600;
+  background:  rgba(0,0,0,0.25);
+  border-radius: 6px;
+  padding:     8px 12px;
+  text-align:  center;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+
+.formulaVars {
+  display:        flex;
+  flex-direction: column;
+  gap:            5px;
+}
+
+.formulaVarRow {
+  display:     flex;
+  gap:         8px;
+  align-items: flex-start;
+  font-size:   0.71rem;
+}
+
+.formulaVarKey {
+  font-family: monospace;
+  color:       #c084fc;
+  font-weight: 700;
+  min-width:   28px;
+  flex-shrink: 0;
+}
+
+.formulaVarDesc {
+  color:       var(--text-muted);
+  line-height: 1.4;
+}
+
+.formulaVarConstraint {
+  color:       rgba(168, 85, 247, 0.7);
+  font-size:   0.65rem;
+  font-style:  italic;
+  margin-left: 4px;
+}
