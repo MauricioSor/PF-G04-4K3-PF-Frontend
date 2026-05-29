@@ -1,4 +1,5 @@
 import React from 'react'
+import ParametrosAvanzados from './ParametrosAvanzados'
 import styles from './EntradasSimulador.module.css'
 import {
   useEntradasSimulador,
@@ -348,6 +349,8 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
             </div>
           </div>
         </div>
+
+        <ParametrosAvanzados />
 
         {error && <div className="alert-error" style={{ marginTop: 14 }}>{error}</div>}
       </div>

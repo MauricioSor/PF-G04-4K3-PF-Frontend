@@ -1,0 +1,71 @@
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.headerIcon {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--teal);
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.grupo {
+  margin-bottom: 14px;
+}
+
+.grupo:last-child {
+  margin-bottom: 0;
+}
+
+.grupoTitulo {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.item {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.sigla {
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-weight: 700;
+  color: var(--text);
+  flex-shrink: 0;
+  min-width: 56px;
+}
+
+.desc {
+  color: var(--text-muted);
+}

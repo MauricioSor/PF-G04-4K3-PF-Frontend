@@ -1,0 +1,113 @@
+.wrapper {
+  margin-top: 14px;
+}
+
+.toggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border-teal);
+  color: var(--teal);
+  font-family: var(--font);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  justify-content: center;
+}
+
+.toggleBtn:hover {
+  background: var(--teal-dim);
+}
+
+.panel {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panelIntro {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.paramCard {
+  background: var(--bg-inner);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+
+.paramCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.paramCardIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.paramCardTitle {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.paramRow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin-bottom: 5px;
+  font-size: 0.72rem;
+  align-items: baseline;
+}
+
+.paramKey {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.paramVal {
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.paramHint {
+  grid-column: 1 / -1;
+  font-size: 0.66rem;
+  color: var(--text-dim);
+  padding-left: 0;
+  margin-top: -3px;
+  font-style: italic;
+}
+
+@media (max-width: 900px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; }
+}
