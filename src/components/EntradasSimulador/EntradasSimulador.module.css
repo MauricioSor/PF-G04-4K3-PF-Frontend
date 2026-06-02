@@ -9,10 +9,16 @@
 /* Grid de 3 columnas */
 .configGrid {
   display:               grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px) minmax(220px, 260px);
+  grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.9fr) minmax(240px, 0.9fr);
   gap:                   16px;
   min-height:            0;
   overflow-x:            auto;
+  align-items:           start;
+}
+
+/* Fila inferior: Eficacia y Ambiente abarcando las 3 columnas */
+.eficaciaRow {
+  grid-column: 1 / -1;
 }
 
 /* Columna izquierda */

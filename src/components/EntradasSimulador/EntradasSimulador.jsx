@@ -29,8 +29,8 @@ const FORMULAS = {
   lehmer: {
     formula: 'Xₙ₊₁ = ( a · Xₙ ) mod m',
     vars: [
-      { key: 'a', desc: 'Multiplicador',        constraint: 'e.g. 16807' },
-      { key: 'm', desc: 'Módulo (primo grande)', constraint: 'e.g. 2147483647 = 2³¹ − 1' },
+      { key: 'a',  desc: 'Multiplicador',        constraint: 'e.g. 16807' },
+      { key: 'm',  desc: 'Módulo (primo grande)', constraint: 'e.g. 2147483647 = 2³¹ − 1' },
       { key: 'X₀', desc: 'Semilla: 0 < X₀ < m' },
       { key: 'Uₙ', desc: 'Número aleatorio: Uₙ = Xₙ / m' },
     ],
@@ -39,9 +39,9 @@ const FORMULAS = {
   mixedCongruential: {
     formula: 'Xₙ₊₁ = ( a · Xₙ + c ) mod m',
     vars: [
-      { key: 'a', desc: 'Multiplicador',   constraint: 'e.g. 1664525' },
-      { key: 'c', desc: 'Incremento (≠0)', constraint: 'e.g. 1013904223' },
-      { key: 'm', desc: 'Módulo',          constraint: 'e.g. 4294967296 = 2³²' },
+      { key: 'a',  desc: 'Multiplicador',   constraint: 'e.g. 1664525' },
+      { key: 'c',  desc: 'Incremento (≠0)', constraint: 'e.g. 1013904223' },
+      { key: 'm',  desc: 'Módulo',          constraint: 'e.g. 4294967296 = 2³²' },
       { key: 'X₀', desc: 'Semilla: 0 ≤ X₀ < m' },
       { key: 'Uₙ', desc: 'Número aleatorio: Uₙ = Xₙ / m' },
     ],
@@ -50,8 +50,8 @@ const FORMULAS = {
   multiplicativeCongruential: {
     formula: 'Xₙ₊₁ = ( a · Xₙ ) mod m',
     vars: [
-      { key: 'a', desc: 'Multiplicador', constraint: 'a ≡ 3 o 5 (mod 8) para período máximo' },
-      { key: 'm', desc: 'Módulo',        constraint: 'potencia de 2, e.g. 2³² = 4294967296' },
+      { key: 'a',  desc: 'Multiplicador', constraint: 'a ≡ 3 o 5 (mod 8) para período máximo' },
+      { key: 'm',  desc: 'Módulo',        constraint: 'potencia de 2, e.g. 2³² = 4294967296' },
       { key: 'X₀', desc: 'Semilla impar, 0 < X₀ < m' },
       { key: 'Uₙ', desc: 'Número aleatorio: Uₙ = Xₙ / m' },
     ],
@@ -60,29 +60,26 @@ const FORMULAS = {
   additiveCongruential: {
     formula: 'Xₙ = ( Xₙ₋₁ + Xₙ₋ₖ ) mod m',
     vars: [
-      { key: 'k',  desc: 'Retardo (lag) — tamaño de la tabla inicial', constraint: 'entero ≥ 2, e.g. 5' },
-      { key: 'm',  desc: 'Módulo',                                      constraint: 'e.g. 2147483647 = 2³¹ − 1' },
+      { key: 'k',       desc: 'Retardo (lag) — tamaño de la tabla inicial', constraint: 'entero ≥ 2, e.g. 5' },
+      { key: 'm',       desc: 'Módulo',                                      constraint: 'e.g. 2147483647 = 2³¹ − 1' },
       { key: 'X₀…Xₖ₋₁', desc: 'Tabla inicial generada por Lehmer a partir de la semilla' },
-      { key: 'Uₙ', desc: 'Número aleatorio: Uₙ = Xₙ / m' },
+      { key: 'Uₙ',     desc: 'Número aleatorio: Uₙ = Xₙ / m' },
     ],
     note: 'La tabla de k valores se inicializa automáticamente con el método de Lehmer usando la semilla provista.',
   },
 }
 
-/* ── Utilidades de input ── */
 const inputStyle = (hasError) => ({
   borderColor: hasError ? 'rgba(239,68,68,0.7)' : undefined,
   boxShadow:   hasError ? '0 0 0 2px rgba(239,68,68,0.18)' : undefined,
 })
 
-/* Bloquea teclas inválidas: solo permite dígitos, punto decimal y teclas de control */
 const blockInvalidKeys = (e) => {
   const ctrl = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','Enter']
   if (ctrl.includes(e.key) || e.ctrlKey || e.metaKey || e.key === '.') return
   if (!/^\d$/.test(e.key)) e.preventDefault()
 }
 
-/* ── Componente de fórmula ── */
 const FormulaSection = ({ metodo }) => {
   const f = FORMULAS[metodo]
   if (!f) return null
@@ -123,7 +120,6 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
 
-      {/* ── Encabezado ── */}
       <div className="page-header" style={{ flexShrink: 0 }}>
         <div className="breadcrumb">
           <span>Inicio</span><span>›</span>
@@ -132,14 +128,12 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
         <h1 className="page-title">Configuración de la Simulación</h1>
       </div>
 
-      {/* ── Cuerpo ── */}
       <div className="page-body fade-in">
         <div className={styles.configGrid}>
 
-          {/* ══ Columna izquierda ══ */}
+          {/* ══ Columna izquierda: General + Distribución de Tipos ══ */}
           <div className={styles.configLeft}>
 
-            {/* General */}
             <div className="card">
               <div className="card-title">
                 <div className="card-title-icon" style={{ background: 'rgba(0,212,200,0.12)' }}>
@@ -176,7 +170,6 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
               </div>
             </div>
 
-            {/* Distribución de Tipos */}
             <div className="card">
               <div className="card-title">
                 <div className="card-title-icon" style={{ background: 'rgba(91,187,255,0.12)' }}>
@@ -223,7 +216,7 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
             </div>
           </div>
 
-          {/* ══ Columna central: Generador RNG ══ */}
+          {/* ══ Columna central: Generador RNG — método + fórmula ══ */}
           <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div className="card-title">
               <div className="card-title-icon" style={{ background: 'rgba(168,85,247,0.12)' }}>
@@ -232,7 +225,6 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
               Generador RNG
             </div>
 
-            {/* Selector de método */}
             <div className="input-group">
               <label className="input-label">Método</label>
               <select value={metodo} onChange={handleMetodoChange}>
@@ -241,10 +233,18 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
               <span className="input-hint">Algoritmo de generación de números pseudoaleatorios</span>
             </div>
 
-            {/* Fórmula del método seleccionado */}
             <FormulaSection metodo={metodo} />
+          </div>
 
-            {/* Semilla */}
+          {/* ══ Columna derecha: Parámetros del método + Semilla ══ */}
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="card-title">
+              <div className="card-title-icon" style={{ background: 'rgba(168,85,247,0.12)' }}>
+                <Cpu size={14} color="#a855f7" />
+              </div>
+              Parámetros y Semilla
+            </div>
+
             <div className="input-group">
               <label className="input-label">Semilla</label>
               <input
@@ -258,7 +258,6 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
               <span className="input-hint">Misma semilla → mismos resultados reproducibles</span>
             </div>
 
-            {/* Parámetros dinámicos del método */}
             {metodoInfo?.params.length === 0 ? (
               <div className="card-inner" style={{ fontSize: '0.75rem', color: 'var(--text-dim)', padding: '10px 12px' }}>
                 Este método no requiere parámetros adicionales.
@@ -291,8 +290,8 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
             )}
           </div>
 
-          {/* ══ Columna derecha: Eficacia y Ambiente ══ */}
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* ══ Fila inferior: Eficacia y Ambiente — abarca las 3 columnas ══ */}
+          <div className={`card ${styles.eficaciaRow}`} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div className="card-title">
               <div className="card-title-icon" style={{ background: 'rgba(59,130,246,0.12)' }}>
                 <Zap size={14} color="#3b82f6" />
@@ -300,54 +299,57 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
               Eficacia y Ambiente
             </div>
 
-            <div>
-              <div className="section-sub">Eficacia del procesamiento</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div className="card-inner" style={{ textAlign: 'center' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
-                    <CheckCircle size={16} color="#10b981" />
-                  </div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: 4 }}>Correcto</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#10b981' }}>99.05%</div>
-                </div>
-                <div className="card-inner" style={{ textAlign: 'center' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
-                    <AlertTriangle size={16} color="#f59e0b" />
-                  </div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: 4 }}>Incidente</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700, color: '#f59e0b' }}>0.95%</div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div className="section-sub">Agua evitada (por equipo)</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                {[
-                  { Icon: Server,  color: '#10b981', label: 'Servidor',  val: '50.000 L' },
-                  { Icon: Network, color: '#3b82f6', label: 'Switch',    val: '15.000 L' },
-                  { Icon: Laptop,  color: '#8b5cf6', label: 'Hogareño',  val: '3.000 L'  },
-                ].map(({ Icon, color, label, val }) => (
-                  <div key={label} className="card-inner" style={{ textAlign: 'center', padding: '10px 6px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
-                      <Icon size={16} color={color} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+              <div>
+                <div className="section-sub">Eficacia del procesamiento</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
+                  <div className="card-inner" style={{ textAlign: 'center' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
+                      <CheckCircle size={16} color="#10b981" />
                     </div>
-                    <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 2 }}>{label}</div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text)' }}>{val}</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: 4 }}>Correcto</div>
+                    <div style={{ fontSize: '1rem', fontWeight: 700, color: '#10b981' }}>99.05%</div>
                   </div>
-                ))}
+                  <div className="card-inner" style={{ textAlign: 'center' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px' }}>
+                      <AlertTriangle size={16} color="#f59e0b" />
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: 4 }}>Incidente</div>
+                    <div style={{ fontSize: '1rem', fontWeight: 700, color: '#f59e0b' }}>0.95%</div>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <div className="section-sub">Umbrales de decisión</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 2 }}>
-                <div>TTR &gt; 160 hs → nuevo recepcionista</div>
-                <div>TT &gt; 160 hs → nuevo operario</div>
-                <div>TEP &gt; 800 eq. → 2do turno</div>
+              <div>
+                <div className="section-sub">Agua evitada (por equipo)</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 8 }}>
+                  {[
+                    { Icon: Server,  color: '#10b981', label: 'Servidor',  val: '50.000 L' },
+                    { Icon: Network, color: '#3b82f6', label: 'Switch',    val: '15.000 L' },
+                    { Icon: Laptop,  color: '#8b5cf6', label: 'Hogareño',  val: '3.000 L'  },
+                  ].map(({ Icon, color, label, val }) => (
+                    <div key={label} className="card-inner" style={{ textAlign: 'center', padding: '10px 6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
+                        <Icon size={16} color={color} />
+                      </div>
+                      <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 2 }}>{label}</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text)' }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="section-sub">Umbrales de decisión</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 2, marginTop: 8 }}>
+                  <div>TTR &gt; 160 hs → nuevo recepcionista</div>
+                  <div>TT &gt; 160 hs → nuevo operario</div>
+                  <div>TEP &gt; 800 eq. → 2do turno</div>
+                </div>
               </div>
             </div>
           </div>
+
         </div>
 
         <ParametrosAvanzados />
@@ -355,7 +357,6 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
         {error && <div className="alert-error" style={{ marginTop: 14 }}>{error}</div>}
       </div>
 
-      {/* ── Footer ── */}
       <div className="page-footer" style={{ flexShrink: 0 }}>
         <button className="btn-secondary" onClick={onReiniciar} disabled={cargando}>
           <RefreshCcw size={14} /> Reiniciar

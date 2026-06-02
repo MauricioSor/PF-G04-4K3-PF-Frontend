@@ -86,7 +86,7 @@ const NODES = [
   {
     icon: <IconGear />, title: 'Diagnóstico/Desarme',
     dotColor: 'dot-orange', iconColor: '#f59e0b',
-    stats: [['Diag.:', 'U(3–15m)'], ['Desarme:', 'U(5–60m)']],
+    stats: [['Diag.:', 'U(3–12m)'], ['Desarme:', 'U(5–55m)']],
   },
   {
     icon: <IconCheck />, title: 'Completados',
