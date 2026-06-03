@@ -3,7 +3,6 @@ import ParametrosAvanzados from './ParametrosAvanzados'
 import styles from './EntradasSimulador.module.css'
 import {
   useEntradasSimulador,
-  METODOS,
   PARAM_LABELS,
   PARAM_HINTS,
 } from '../../hooks/useEntradasSimulador'
@@ -16,57 +15,17 @@ import {
   Cpu, Zap,
 } from 'lucide-react'
 
-const FORMULAS = {
-  centralSquare: {
-    formula: 'Xₙ₊₁ = middle_n_digits( Xₙ² )',
-    vars: [
-      { key: 'Xₙ',  desc: 'Valor actual — cuadrado del período anterior' },
-      { key: 'X₀',  desc: 'Semilla inicial', constraint: 'mínimo 4 dígitos' },
-      { key: 'Uₙ',  desc: 'Número aleatorio generado: Uₙ = Xₙ / 10ⁿ' },
-    ],
-    note: 'Extrae los n dígitos centrales del cuadrado del valor actual.',
-  },
-  lehmer: {
-    formula: 'Xₙ₊₁ = ( a · Xₙ ) mod m',
-    vars: [
-      { key: 'a',  desc: 'Multiplicador',        constraint: 'e.g. 16807' },
-      { key: 'm',  desc: 'Módulo (primo grande)', constraint: 'e.g. 2147483647 = 2³¹ − 1' },
-      { key: 'X₀', desc: 'Semilla: 0 < X₀ < m' },
-      { key: 'Uₙ', desc: 'Número aleatorio: Uₙ = Xₙ / m' },
-    ],
-    note: 'Variante multiplicativa pura. Requiere m primo y a primitiva raíz mod m.',
-  },
-  mixedCongruential: {
-    formula: 'Xₙ₊₁ = ( a · Xₙ + c ) mod m',
-    vars: [
-      { key: 'a',  desc: 'Multiplicador',   constraint: 'e.g. 1664525' },
-      { key: 'c',  desc: 'Incremento (≠0)', constraint: 'e.g. 1013904223' },
-      { key: 'm',  desc: 'Módulo',          constraint: 'e.g. 4294967296 = 2³²' },
-      { key: 'X₀', desc: 'Semilla: 0 ≤ X₀ < m' },
-      { key: 'Uₙ', desc: 'Número aleatorio: Uₙ = Xₙ / m' },
-    ],
-    note: 'Período máximo si: mcd(c, m) = 1; a − 1 divisible por todos los factores primos de m; y si 4 | m entonces 4 | (a − 1).',
-  },
-  multiplicativeCongruential: {
-    formula: 'Xₙ₊₁ = ( a · Xₙ ) mod m',
-    vars: [
-      { key: 'a',  desc: 'Multiplicador', constraint: 'a ≡ 3 o 5 (mod 8) para período máximo' },
-      { key: 'm',  desc: 'Módulo',        constraint: 'potencia de 2, e.g. 2³² = 4294967296' },
-      { key: 'X₀', desc: 'Semilla impar, 0 < X₀ < m' },
-      { key: 'Uₙ', desc: 'Número aleatorio: Uₙ = Xₙ / m' },
-    ],
-    note: 'c = 0. Período máximo m/4 cuando a ≡ ±3 (mod 8) y X₀ es impar.',
-  },
-  additiveCongruential: {
-    formula: 'Xₙ = ( Xₙ₋₁ + Xₙ₋ₖ ) mod m',
-    vars: [
-      { key: 'k',       desc: 'Retardo (lag) — tamaño de la tabla inicial', constraint: 'entero ≥ 2, e.g. 5' },
-      { key: 'm',       desc: 'Módulo',                                      constraint: 'e.g. 2147483647 = 2³¹ − 1' },
-      { key: 'X₀…Xₖ₋₁', desc: 'Tabla inicial generada por Lehmer a partir de la semilla' },
-      { key: 'Uₙ',     desc: 'Número aleatorio: Uₙ = Xₙ / m' },
-    ],
-    note: 'La tabla de k valores se inicializa automáticamente con el método de Lehmer usando la semilla provista.',
-  },
+/* ── Fórmula del Congruencial Mixto (única disponible) ── */
+const FORMULA = {
+  expr: 'Xₙ₊₁ = ( a · Xₙ + c ) mod m',
+  vars: [
+    { key: 'a',  desc: 'Multiplicador',   constraint: 'e.g. 1664525' },
+    { key: 'c',  desc: 'Incremento (≠0)', constraint: 'e.g. 1013904223' },
+    { key: 'm',  desc: 'Módulo',          constraint: 'e.g. 4294967296 = 2³²' },
+    { key: 'X₀', desc: 'Semilla: 0 ≤ X₀ < m' },
+    { key: 'Uₙ', desc: 'Número aleatorio: Uₙ = Xₙ / m' },
+  ],
+  note: 'Período máximo si: mcd(c, m) = 1; a − 1 divisible por todos los factores primos de m; y si 4 | m entonces 4 | (a − 1).',
 }
 
 const inputStyle = (hasError) => ({
@@ -80,41 +39,12 @@ const blockInvalidKeys = (e) => {
   if (!/^\d$/.test(e.key)) e.preventDefault()
 }
 
-const FormulaSection = ({ metodo }) => {
-  const f = FORMULAS[metodo]
-  if (!f) return null
-  return (
-    <div className={styles.formulaBox}>
-      <div className={styles.formulaLabel}>Fórmula del método</div>
-      <div className={styles.formulaExpr}>{f.formula}</div>
-      <div className={styles.formulaVars}>
-        {f.vars.map(({ key, desc, constraint }) => (
-          <div key={key} className={styles.formulaVarRow}>
-            <span className={styles.formulaVarKey}>{key}</span>
-            <span className={styles.formulaVarDesc}>
-              {desc}
-              {constraint && (
-                <span className={styles.formulaVarConstraint}> ({constraint})</span>
-              )}
-            </span>
-          </div>
-        ))}
-      </div>
-      {f.note && (
-        <div style={{ fontSize: '0.65rem', color: 'rgba(168,85,247,0.6)', marginTop: 8, fontStyle: 'italic', lineHeight: 1.4 }}>
-          {f.note}
-        </div>
-      )}
-    </div>
-  )
-}
-
 const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
   const {
     semilla, setSemilla,
-    metodo, params, paramErrors,
+    params, paramErrors,
     metodoInfo,
-    handleMetodoChange, handleParamChange, handleEjecutar,
+    handleParamChange, handleEjecutar,
   } = useEntradasSimulador(onEjecutar)
 
   return (
@@ -156,10 +86,10 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
                   <div className="section-sub" style={{ marginBottom: 8 }}>Parámetros del modelo</div>
                   {[
                     ['Lotes:',        'Exp(E=80 min)'],
-                    ['Equipos/lote:', 'Unif(5–15)'],
+                    ['Equipos/lote:', 'Unif(5–14)'],
                     ['Recepción:',    'Normal(2, 0.5)'],
-                    ['Diagnóstico:',  'Unif(3–15)'],
-                    ['Desarme:',      'Unif(5–60)'],
+                    ['Diagnóstico:',  'Unif(3–12)'],
+                    ['Desarme:',      'Unif(5–55)'],
                   ].map(([k, v]) => (
                     <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: 5, color: 'var(--text-muted)' }}>
                       <span>{k}</span>
@@ -216,7 +146,7 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
             </div>
           </div>
 
-          {/* ══ Columna central: Generador RNG — método + fórmula ══ */}
+          {/* ══ Columna central: Generador RNG — fórmula fija ══ */}
           <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div className="card-title">
               <div className="card-title-icon" style={{ background: 'rgba(168,85,247,0.12)' }}>
@@ -225,15 +155,41 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
               Generador RNG
             </div>
 
-            <div className="input-group">
-              <label className="input-label">Método</label>
-              <select value={metodo} onChange={handleMetodoChange}>
-                {METODOS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-              </select>
-              <span className="input-hint">Algoritmo de generación de números pseudoaleatorios</span>
+            {/* Badge del método fijo */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)',
+              borderRadius: 8, padding: '8px 12px',
+            }}>
+              <Cpu size={13} color="#a855f7" />
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#a855f7' }}>
+                Congruencial Mixto (LCG)
+              </span>
             </div>
 
-            <FormulaSection metodo={metodo} />
+            {/* Fórmula */}
+            <div className={styles.formulaBox}>
+              <div className={styles.formulaLabel}>Fórmula del método</div>
+              <div className={styles.formulaExpr}>{FORMULA.expr}</div>
+              <div className={styles.formulaVars}>
+                {FORMULA.vars.map(({ key, desc, constraint }) => (
+                  <div key={key} className={styles.formulaVarRow}>
+                    <span className={styles.formulaVarKey}>{key}</span>
+                    <span className={styles.formulaVarDesc}>
+                      {desc}
+                      {constraint && (
+                        <span className={styles.formulaVarConstraint}> ({constraint})</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {FORMULA.note && (
+                <div style={{ fontSize: '0.65rem', color: 'rgba(168,85,247,0.6)', marginTop: 8, fontStyle: 'italic', lineHeight: 1.4 }}>
+                  {FORMULA.note}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ══ Columna derecha: Parámetros del método + Semilla ══ */}
@@ -258,39 +214,33 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
               <span className="input-hint">Misma semilla → mismos resultados reproducibles</span>
             </div>
 
-            {metodoInfo?.params.length === 0 ? (
-              <div className="card-inner" style={{ fontSize: '0.75rem', color: 'var(--text-dim)', padding: '10px 12px' }}>
-                Este método no requiere parámetros adicionales.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div className="section-sub">Parámetros del método</div>
-                {metodoInfo?.params.map(key => {
-                  const hasError = !!paramErrors[key]
-                  return (
-                    <div key={key} className="input-group" style={{ marginBottom: 0 }}>
-                      <label className="input-label">{PARAM_LABELS[key]}</label>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={params[key] ?? ''}
-                        onChange={e => handleParamChange(key, e.target.value)}
-                        onKeyDown={blockInvalidKeys}
-                        placeholder="Número positivo requerido"
-                        style={inputStyle(hasError)}
-                      />
-                      {hasError
-                        ? <span className={styles.inputError}>{paramErrors[key]}</span>
-                        : <span className="input-hint">{PARAM_HINTS[key]}</span>
-                      }
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="section-sub">Parámetros del método</div>
+              {metodoInfo?.params.map(key => {
+                const hasError = !!paramErrors[key]
+                return (
+                  <div key={key} className="input-group" style={{ marginBottom: 0 }}>
+                    <label className="input-label">{PARAM_LABELS[key]}</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={params[key] ?? ''}
+                      onChange={e => handleParamChange(key, e.target.value)}
+                      onKeyDown={blockInvalidKeys}
+                      placeholder="Número positivo requerido"
+                      style={inputStyle(hasError)}
+                    />
+                    {hasError
+                      ? <span className={styles.inputError}>{paramErrors[key]}</span>
+                      : <span className="input-hint">{PARAM_HINTS[key]}</span>
+                    }
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
-          {/* ══ Fila inferior: Eficacia y Ambiente — abarca las 3 columnas ══ */}
+          {/* ══ Fila inferior: Eficacia y Ambiente ══ */}
           <div className={`card ${styles.eficaciaRow}`} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div className="card-title">
               <div className="card-title-icon" style={{ background: 'rgba(59,130,246,0.12)' }}>

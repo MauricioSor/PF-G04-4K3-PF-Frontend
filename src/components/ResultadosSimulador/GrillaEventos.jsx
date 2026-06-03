@@ -63,7 +63,7 @@ const GrillaEventos = ({ grilla, rng }) => {
             <tr>
               <th>#</th><th>Día</th><th>Lote</th><th>Eq.</th>
               <th>u·Tipo</th><th>Tipo</th>
-              <th>u·Peso</th><th>Peso (kg)</th>
+              <th>u·Peso₁</th><th>u·Peso₂</th><th>Peso (kg)</th>
               <th>u·TR₁</th><th>u·TR₂</th><th>TR (min)</th>
               <th>u·TD</th><th>TD (min)</th>
               <th>u·Dest.</th><th>Destino</th>
@@ -81,6 +81,9 @@ const GrillaEventos = ({ grilla, rng }) => {
                 <td className="mono" style={{ color: 'var(--text-dim)' }}>{fmtU(f.uTipo)}</td>
                 <td className="mono">{f.tipoLabel}</td>
                 <td className="mono" style={{ color: 'var(--text-dim)' }}>{fmtU(f.uPeso)}</td>
+                <td className="mono" style={{ color: 'var(--text-dim)' }}>
+                  {f.uPeso2 != null ? fmtU(f.uPeso2) : '—'}
+                </td>
                 <td className="mono">{fmt2(f.peso)}</td>
                 <td className="mono" style={{ color: 'var(--text-dim)' }}>{fmtU(f.uTR1)}</td>
                 <td className="mono" style={{ color: 'var(--text-dim)' }}>{fmtU(f.uTR2)}</td>

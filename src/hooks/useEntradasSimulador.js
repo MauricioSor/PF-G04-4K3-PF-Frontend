@@ -1,26 +1,20 @@
 import { useState, useRef, useEffect } from 'react'
 
-/* ── Catálogo de métodos RNG ── */
+/* ── Único método RNG disponible ── */
 export const METODOS = [
-  { value: 'centralSquare',              label: '1. Parte Central del Cuadrado', params: [] },
-  { value: 'lehmer',                     label: '2. Método de Lehmer',           params: ['a', 'm'] },
-  { value: 'mixedCongruential',          label: '3. Congruencial Mixto (LCG)',   params: ['a', 'c', 'm'] },
-  { value: 'multiplicativeCongruential', label: '4. Congruencial Multiplicativo', params: ['a', 'm'] },
-  { value: 'additiveCongruential',       label: '5. Congruencial Aditivo',       params: ['k', 'm'] },
+  { value: 'mixedCongruential', label: 'Congruencial Mixto (LCG)', params: ['a', 'c', 'm'] },
 ]
 
 export const PARAM_LABELS = {
   a: 'Multiplicador (a)',
   c: 'Incremento (c)',
   m: 'Módulo (m)',
-  k: 'Retardo (k)',
 }
 
 export const PARAM_HINTS = {
   a: 'Factor multiplicativo del generador',
-  c: 'Constante aditiva (solo Mixto)',
+  c: 'Constante aditiva (≠ 0)',
   m: 'Módulo — espacio de estados',
-  k: 'Cantidad de valores iniciales',
 }
 
 export const isValidNumericInput = (str) =>
@@ -39,22 +33,16 @@ export function useEntradasSimulador(onEjecutar) {
   useEffect(() => { onEjecutarRef.current = onEjecutar }, [onEjecutar])
 
   const [semilla,     setSemillaState] = useState('')
-  const [metodo,      setMetodo]       = useState('lehmer')
   const [params,      setParams]       = useState({})
   const [paramErrors, setParamErrors]  = useState({})
 
-  const metodoInfo = METODOS.find(m => m.value === metodo)
+  // Método fijo: Congruencial Mixto
+  const metodo     = 'mixedCongruential'
+  const metodoInfo = METODOS[0]
 
   /* ── Semilla: solo positivos o vacío (aleatoria al ejecutar) ── */
   const setSemilla = (val) => {
     if (isValidNumericInput(val)) setSemillaState(val)
-  }
-
-  /* ── Cambio de método → limpiar estado ── */
-  const handleMetodoChange = (e) => {
-    setMetodo(e.target.value)
-    setParams({})
-    setParamErrors({})
   }
 
   const handleParamChange = (key, val) => {
@@ -73,8 +61,6 @@ export function useEntradasSimulador(onEjecutar) {
   }
 
   const validate = () => {
-    if (!metodoInfo) return true
-
     const errors = {}
     metodoInfo.params.forEach(key => {
       const val = params[key] ?? ''
@@ -114,7 +100,6 @@ export function useEntradasSimulador(onEjecutar) {
     params,
     paramErrors,
     metodoInfo,
-    handleMetodoChange,
     handleParamChange,
     handleEjecutar,
   }

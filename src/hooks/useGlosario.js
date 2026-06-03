@@ -27,9 +27,9 @@ const GRUPOS = [
     titulo: 'Pesos (kg)',
     color: '#c084fc',
     items: [
-      ['PS',  'Peso del servidor'],
-      ['PR',  'Peso del switch/router'],
-      ['PER', 'Peso del equipo hogareño'],
+      ['PS',  'Peso del servidor — Uniforme(15, 30) → 15 + 15·u'],
+      ['PR',  'Peso del switch/router — Uniforme(3, 8) → 3 + 5·u'],
+      ['PER', 'Peso del equipo hogareño — Normal(μ=0.5, σ=0.2) [Box-Muller, 2 u\'s]'],
       ['PT',  'Peso total procesado en el período'],
     ],
   },
@@ -38,8 +38,8 @@ const GRUPOS = [
     color: '#f59e0b',
     items: [
       ['TR',   'Tiempo de recepción de un equipo — Normal(μ=2, σ=0.5)'],
-      ['TD',   'Tiempo de diagnóstico — Uniforme(3, 15)'],
-      ['TDD',  'Tiempo de desarme — Uniforme(5, 60)'],
+      ['TD',   'Tiempo de diagnóstico — Uniforme(3, 12) → 3 + 9·u'],
+      ['TDD',  'Tiempo de desarme — Uniforme(5, 55) → 5 + 50·u'],
       ['TTR',  'Tiempo total de recepción acumulado'],
       ['TTD',  'Tiempo total de diagnóstico acumulado'],
       ['TTDD', 'Tiempo total de desarme acumulado'],
