@@ -86,7 +86,7 @@ const NODES = [
   {
     icon: <IconGear />, title: 'Diagnóstico/Desarme',
     dotColor: 'dot-orange', iconColor: '#f59e0b',
-    stats: [['Diag.:', 'U(3–12m)'], ['Desarme:', 'U(5–55m)']],
+    stats: [['Diag.:', 'U(3–9m)'], ['Desarme:', 'U(5–55m)']],
   },
   {
     icon: <IconCheck />, title: 'Completados',
@@ -97,15 +97,17 @@ const NODES = [
 
 /* ── Distribuciones de probabilidad ── */
 const DISTRIBUCIONES = [
-  { n: '1', var: 'Tiempo entre arribosdel lotes', dist: 'Exponencial',     formula: 'T = −80 · ln(u)' },
-  { n: '2', var: 'Equipos por lote',              dist: 'Uniforme Entera', formula: 'CE = INT[5 + 10u]' },
-  { n: '3', var: 'Tipo de dispositivo',           dist: 'Binomial (tabla)', formula: 'Serv ≤ 0.25 / Sw ≤ 0.70' },
-  { n: '4', var: 'Peso del dispositivo',          dist: 'Uniforme',        formula: 'P = 0.5 + 19.5u' },
-  { n: '5', var: 'Tiempo de recepción',           dist: 'Normal',          formula: 'Normal(μ=2, σ=0.5)' },
-  { n: '6', var: 'Destino del equipo',            dist: 'Binomial (tabla)', formula: 'EF ≤ 0.10 / ED ≤ 0.85' },
-  { n: '7', var: 'Tiempo de diagnóstico',         dist: 'Uniforme',        formula: 'TD = 3 + 12u' },
-  { n: '8', var: 'Tiempo de desarme',             dist: 'Uniforme',        formula: 'TDD = 5 + 55u' },
-  { n: '9', var: 'Eficacia del proceso',          dist: 'Binomial (tabla)', formula: 'OK ≤ 0.9905' },
+  { n: '1',  var: 'Tiempo entre arribos de lotes',    dist: 'Poisson',          formula: 'Poisson(λ=6, L)' },
+  { n: '2',  var: 'Cantidad de equipos por lote',     dist: 'Uniforme Entera',  formula: 'CE = INT[5 + 10u]  (a=5, b=15)' },
+  { n: '3',  var: 'Tipo de dispositivo',              dist: 'Binomial (tabla)', formula: 'Serv ≤ 0.25 / Sw ≤ 0.70 / Hog ≤ 1.00' },
+  { n: '4',  var: 'Peso del Servidor',                dist: 'Uniforme',         formula: 'PS = 15 + 15u  (a=15, b=30 kg)' },
+  { n: '5',  var: 'Peso Switch/Router',               dist: 'Uniforme',         formula: 'PR = 3 + 5u  (a=3, b=8 kg)' },
+  { n: '6',  var: 'Peso Equipo de Red Hogareño',      dist: 'Normal',           formula: 'Normal(μ=0.5, σ=0.2, PER)' },
+  { n: '7',  var: 'Tiempo de recepción',              dist: 'Normal',           formula: 'Normal(μ=2, σ=0.5, TR)' },
+  { n: '8',  var: 'Destino del equipo',               dist: 'Binomial (tabla)', formula: 'Reut ≤ 0.10 / Des ≤ 0.85 / Disp ≤ 1.00' },
+  { n: '9',  var: 'Tiempo de diagnóstico',            dist: 'Uniforme',         formula: 'TD = 3 + 6u  (a=3, b=9 min)' },
+  { n: '10', var: 'Tiempo de desarme',                dist: 'Uniforme',         formula: 'TDD = 5 + 55u  (a=5, b=60 min)' },
+  { n: '11', var: 'Eficacia del procesamiento',       dist: 'Binomial (tabla)', formula: 'OK ≤ 0.9905 / Incid ≤ 1.00' },
 ]
 
 /* ── Componente principal ── */
@@ -148,7 +150,7 @@ const Modelo = ({ onNavigate }) => (
             Distribuciones de Probabilidad
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
             {DISTRIBUCIONES.map(({ n, var: v, dist, formula }) => (
               <div key={n} className="card-inner" style={{ padding: '12px 14px' }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
