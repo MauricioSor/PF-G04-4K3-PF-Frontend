@@ -1,659 +1,704 @@
-# ♻️ Simulador Nave Tierra — Reciclaje de RAEE
+# 🌍 Nave Tierra — Simulador de Reciclaje de Basura Electrónica
 
-**Frontend del Trabajo Final Integrador (TFI) · Grupo G04 · 4K3 · UTN-FRT**
-Simulación de eventos discretos de una planta de reciclaje de residuos electrónicos en San Miguel de Tucumán.
+> **Proyecto Final — Simulación** | Grupo 04 · 4K3
 
-> Aplicación web que **simula el funcionamiento de una planta de reciclaje** durante un mes y muestra, con gráficos y tablas, cuántos equipos se procesan, cuánto material se recupera, cuánta agua se evita contaminar y qué decisiones de gestión conviene tomar.
-
----
-
-## 📑 Tabla de contenidos
-
-1. [Para todo público: ¿qué es esto?](#-para-todo-público-qué-es-esto)
-2. [El modelo: cómo "funciona" la planta simulada](#-el-modelo-cómo-funciona-la-planta-simulada)
-3. [El motor de azar: números aleatorios](#-el-motor-de-azar-números-aleatorios)
-4. [Cómo usar la aplicación, paso a paso](#️-cómo-usar-la-aplicación-paso-a-paso)
-5. [Cómo leer los resultados](#-cómo-leer-los-resultados)
-6. [Glosario de variables](#-glosario-de-variables)
-7. [Para técnicos: arquitectura y stack](#️-para-técnicos-arquitectura-y-stack)
-8. [Estructura del proyecto](#-estructura-del-proyecto)
-9. [Principales funciones y métodos](#-principales-funciones-y-métodos)
-10. [Contrato con la API (backend)](#-contrato-con-la-api-backend)
-11. [Instalación y ejecución](#-instalación-y-ejecución)
-12. [Build y despliegue](#-build-y-despliegue)
-13. [Preguntas frecuentes](#-preguntas-frecuentes)
-14. [Créditos](#-créditos)
+Simulación de eventos discretos de una planta de recuperación de equipos electrónicos en desuso, construida con **React + Vite** (frontend) y **Express + Node.js** (backend). Implementa el método de **Montecarlo** con el **Generador Congruencial Mixto** para modelar los procesos estocásticos del sistema.
 
 ---
 
-## 🌎 Para todo público: ¿qué es esto?
+## Índice
 
-### El problema del mundo real
-
-Los **RAEE** (Residuos de Aparatos Eléctricos y Electrónicos) — computadoras, servidores, routers, switches y equipos de red viejos — son uno de los tipos de basura que más rápido crece en el mundo. Si se tiran mal, contaminan el suelo y el agua. Si se reciclan bien, se recupera material valioso y se **evita contaminar miles de litros de agua**.
-
-**Nave Tierra** es una planta (modelo) que recibe estos equipos, los revisa y decide qué hacer con cada uno: reutilizarlo, desarmarlo para recuperar piezas, o descartarlo.
-
-### ¿Qué hace este software?
-
-No es la planta real: es un **simulador**. Imita lo que pasaría en la planta durante **30 días laborables** (8 horas por día) usando matemática y azar controlado, sin tener que esperar un mes real ni gastar recursos.
-
-Pensalo como un "videojuego de gestión" que en lugar de jugarse, se *calcula*: el programa genera llegadas de equipos al azar (pero siguiendo patrones realistas), los procesa uno por uno y al final te entrega un **tablero con estadísticas y recomendaciones**.
-
-### ¿Para qué sirve?
-
-- 📊 **Estimar capacidad**: ¿cuántos equipos puede procesar la planta en un mes?
-- 💧 **Medir impacto ambiental**: ¿cuántos litros de agua se evita contaminar?
-- ⚖️ **Cuantificar material**: ¿cuántas toneladas se recuperan?
-- 🧑‍🔧 **Tomar decisiones de gestión**: ¿hace falta contratar más personal o abrir un segundo turno?
-- 🎲 **Validar el azar**: comprobar que el generador de números aleatorios es "justo" (uniforme).
-
-### ¿Por qué simular en vez de medir la planta real?
-
-Porque es **barato, rápido y seguro**. Podés probar muchos escenarios ("¿y si llegan más equipos?", "¿y si cambio un parámetro?") sin riesgo, y como el azar es **reproducible** (ver más abajo), dos personas que usen la misma configuración obtienen exactamente el mismo resultado — algo clave para un trabajo académico.
+1. [Caso de Estudio](#1-caso-de-estudio)
+2. [Arquitectura del proyecto](#2-arquitectura-del-proyecto)
+3. [Generación de números pseudoaleatorios](#3-generación-de-números-pseudoaleatorios)
+4. [Distribuciones de probabilidad aplicadas](#4-distribuciones-de-probabilidad-aplicadas)
+5. [Variables del modelo](#5-variables-del-modelo)
+6. [Gráficos del tablero de resultados](#6-gráficos-del-tablero-de-resultados)
+7. [Tablas del simulador](#7-tablas-del-simulador)
+8. [Umbrales de decisión](#8-umbrales-de-decisión)
+9. [Instalación y ejecución local](#9-instalación-y-ejecución-local)
+10. [Despliegue (Netlify + Render)](#10-despliegue-netlify--render)
 
 ---
 
-## 🏭 El modelo: cómo "funciona" la planta simulada
+## 1. Caso de Estudio
 
-La planta se modela como una **línea de proceso** por la que pasa cada equipo, de principio a fin:
+### ¿Qué simula Nave Tierra?
+
+Nave Tierra es una **empresa de gestión de residuos electrónicos** (e-waste). Recibe diariamente lotes de equipos en desuso —servidores, switches, routers y dispositivos hogareños— y los procesa en una planta durante **30 días laborables** de 8 horas (480 minutos) cada uno.
+
+### Objetivo de la simulación
+
+Evaluar durante un mes completo de operación:
+
+- Cuántos equipos se procesan en total (TEP).
+- El destino de cada equipo: reutilización, desarme o disposición final.
+- El tiempo que insumen los operarios en cada etapa.
+- El impacto ambiental positivo: litros de agua que no se contaminan gracias al procesamiento correcto.
+- Si la planta necesita incorporar personal adicional o habilitar un segundo turno.
+
+### Flujo de cada equipo
 
 ```
-  🚚 Llegadas  →  ⏳ Cola      →  🧑‍💼 Recepción  →  ⏳ Cola        →  ⚙️ Diagnóstico  →  ✅ Destino final
-   de lotes       Recepción       (revisión)        Diagnóstico       y Desarme         (3 caminos)
+Arribo del lote (Exponencial 80 min)
+        │
+        ▼
+Recepción del equipo (Normal μ=2, σ=0.5 min)
+        │
+        ▼
+Clasificación de tipo (Tabla de probabilidad)
+   ├─ Tipo 1: Servidor (25%)
+   ├─ Tipo 2: Switch/Router (45%)
+   └─ Tipo 3: Hogareño (30%)
+        │
+        ▼
+Pesaje (Uniforme 0.5–20 kg)
+        │
+        ▼
+Diagnóstico (Uniforme 3–15 min)
+        │
+        ▼
+Destino (Tabla de probabilidad)
+   ├─ EF: Funcional → reutilización (10%)
+   ├─ ED: Desarme → Uniforme(5–60 min) (75%)
+   └─ EI: Irrecuperable → disposición final (15%)
+        │
+        ▼
+Control de eficacia
+   ├─ OK (99.05%) → contabiliza litros de agua evitados
+   └─ INCIDENTE (0.95%) → posible contaminación
 ```
-
-Paso a paso, lo que ocurre con cada equipo:
-
-### 1️⃣ Llegan los lotes de equipos
-Los camiones llegan en **lotes**, en momentos al azar. El tiempo entre una llegada y la siguiente sigue una distribución **Exponencial con media de 80 minutos** (≈ 6 lotes por día). Cada lote trae entre **5 y 14 equipos** (distribución uniforme).
-
-### 2️⃣ Cada equipo es de un tipo
-Al entrar, se sortea qué tipo de equipo es:
-
-| Tipo | Equipo | Probabilidad |
-|------|--------|:---:|
-| 🖥️ Tipo 1 | Servidor (Rack/Blade) | 25 % |
-| 🌐 Tipo 2 | Switch / Router industrial | 45 % |
-| 💻 Tipo 3 | Equipo de red hogareño | 30 % |
-
-Cada equipo además tiene un **peso** sorteado al azar (cada tipo en su rango).
-
-### 3️⃣ Recepción
-Un recepcionista registra cada equipo. El tiempo de recepción sigue una distribución **Normal (media 2 min, desvío 0,5)**. Hay **1 recepcionista** y la cola se atiende por orden de llegada (**FIFO**: el primero que llega es el primero en ser atendido).
-
-### 4️⃣ Diagnóstico y decisión de destino
-Se diagnostica cada equipo (**Uniforme entre 3 y 12 min**) y se decide su destino:
-
-| Destino | Sigla | Qué significa | Proporción |
-|---------|:---:|---------------|:---:|
-| ♻️ Reutilización | **EF** | El equipo funciona → se reutiliza | ~10 % |
-| 🔧 Desarme | **ED** | Se desarma para recuperar piezas/materiales | ~75 % |
-| 🗑️ Disposición | **EI** | Irrecuperable → disposición final | ~15 % |
-
-Los equipos que van a desarme suman un tiempo extra de **desarme (Uniforme entre 5 y 55 min)**.
-
-### 5️⃣ Control de calidad e impacto ambiental
-Cada procesamiento puede salir **correcto (99,05 %)** o terminar en un **incidente de contaminación (0,95 %)**. Cuando sale correcto, se contabiliza el **agua que se evitó contaminar**, según el tipo de equipo:
-
-| Equipo | Agua evitada por equipo |
-|--------|:---:|
-| 🖥️ Servidor | 50.000 L |
-| 🌐 Switch/Router | 15.000 L |
-| 💻 Hogareño | 3.000 L |
-
-### 6️⃣ Decisiones de gestión (lógica "si… entonces…")
-Al terminar el mes, el modelo evalúa tres reglas para recomendar acciones:
-
-| Si se cumple… | Entonces se recomienda… |
-|---------------|--------------------------|
-| **TTR > 160 hs** (tiempo total de recepción) | Incorporar un nuevo recepcionista |
-| **TT > 160 hs** (tiempo operativo total) | Incorporar un nuevo operario |
-| **TEP > 800 equipos** (total procesado) | Habilitar un segundo turno o convenio |
-
-> 🧮 **Nota sobre los parámetros:** todos estos valores (distribuciones, probabilidades, umbrales) son **parámetros fijos del modelo** y viven en el **servidor de simulación** (backend). La aplicación web los muestra como referencia, pero para modificarlos hay que actualizar la configuración del servidor.
-
-### Las 9 distribuciones de probabilidad del modelo
-
-Cada fuente de azar se modela con una fórmula matemática. `u` es un número aleatorio entre 0 y 1:
-
-| # | Variable | Distribución | Fórmula |
-|:-:|----------|--------------|---------|
-| 1 | Tiempo entre arribos de lotes | Exponencial | `T = −80 · ln(u)` |
-| 2 | Equipos por lote | Uniforme entera | `CE = INT[5 + 10·u]` |
-| 3 | Tipo de dispositivo | Tabla (acumulada) | Serv ≤ 0,25 / Sw ≤ 0,70 / resto Hogareño |
-| 4 | Peso del dispositivo | Uniforme | `P = 0,5 + 19,5·u` |
-| 5 | Tiempo de recepción | Normal | `Normal(μ=2, σ=0,5)` |
-| 6 | Destino del equipo | Tabla (acumulada) | EF ≤ 0,10 / ED ≤ 0,85 / resto EI |
-| 7 | Tiempo de diagnóstico | Uniforme | `TD = 3 + 9·u` |
-| 8 | Tiempo de desarme | Uniforme | `TDD = 5 + 50·u` |
-| 9 | Eficacia del proceso | Tabla (acumulada) | OK ≤ 0,9905 / resto incidente |
-
-> La distribución **Normal** se genera con el método de **Box-Muller**, que consume **dos** números aleatorios `u` por cada valor (por eso en la grilla verás `u·TR₁` y `u·TR₂`).
 
 ---
 
-## 🎲 El motor de azar: números aleatorios
+## 2. Arquitectura del proyecto
 
-Una simulación necesita "tirar los dados" miles de veces. Pero las computadoras no saben generar azar verdadero: generan **números pseudoaleatorios** mediante una fórmula. Este proyecto usa el método clásico:
-
-### Generador Congruencial Mixto (LCG)
+### Frontend (`PF-G04-4K3-PF-Frontend`)
 
 ```
-Xₙ₊₁ = ( a · Xₙ + c ) mod m
-Uₙ   = Xₙ / m
+src/
+├── App.jsx                   # Orquestador de vistas (Bienvenida / Modelo / Config / Resultados)
+├── index.css                 # Sistema de diseño global (variables CSS, tokens)
+│
+├── components/
+│   ├── Bienvenida/           # Pantalla de inicio con descripción del proyecto
+│   ├── EntradasSimulador/    # Formulario de configuración: método RNG, semilla, parámetros
+│   ├── Modelo/               # Explicación del modelo matemático
+│   └── ResultadosSimulador/  # Tablero de análisis con todas las vistas
+│       ├── DonutsDestino.jsx         → Gráficos de torta (tipo y destino)
+│       ├── AcumuladoMensual.jsx      → Líneas acumuladas (TEP + agua)
+│       ├── DesgloseDiario.jsx        → Tabla diaria de indicadores
+│       ├── GrillaEventos.jsx         → Auditoría equipo por equipo
+│       ├── DecisionesDetalle.jsx     → Semáforos de umbrales
+│       ├── HistogramaGenerador.jsx   → Histograma de los u generados
+│       └── GlosarioVariables.jsx     → Glosario lateral de variables
+│
+└── hooks/
+    ├── useSimulacion.js          # Estado global: llama al backend, maneja la vista activa
+    ├── useEntradasSimulador.js   # Lógica del formulario: validación, semilla, payload
+    ├── useResultados.js          # Tabs del tablero, métricas calculadas
+    ├── useDonutsDestino.js       # Datos para gráficos de torta
+    ├── useAcumuladoMensual.js    # Datos para gráfico de líneas acumulado
+    ├── useDesgloseDiario.js      # Totales de la tabla diaria
+    ├── useHistogramaGenerador.js # Estadísticas y bins del histograma RNG
+    ├── useGrillaEventos.js       # Paginación y ordenamiento de la grilla
+    └── useGlosario.js            # Definiciones de todas las variables
 ```
 
-Donde el usuario configura:
+### Backend (`PF-G04-4K3-PF-Backend`)
 
-| Parámetro | Nombre | Rol | Ejemplo |
-|:---:|--------|-----|---------|
-| `a` | Multiplicador | Factor multiplicativo del generador | 1664525 |
-| `c` | Incremento | Constante aditiva (debe ser ≠ 0) | 1013904223 |
-| `m` | Módulo | Tamaño del "espacio de estados" | 4294967296 (= 2³²) |
-| `X₀` | Semilla | Valor inicial (`0 ≤ X₀ < m`) | configurable |
-
-Cada `Xₙ` se divide por `m` para obtener un número `Uₙ` entre 0 y 1, que alimenta las distribuciones de arriba.
-
-### 🔁 Reproducibilidad: la clave del trabajo académico
-
-La **semilla** (`X₀`) es el punto de partida. **Misma semilla + mismos parámetros = exactamente los mismos resultados**, siempre. Esto permite:
-- Repetir un experimento y verificar que da igual.
-- Que el profesor reproduzca exactamente lo que vio el alumno.
-- Comparar escenarios cambiando un solo parámetro y aislando su efecto.
-
-Si dejás el campo **Semilla vacío**, la app genera una **semilla aleatoria** automáticamente (entre 1000 y 100000) y te la muestra en los resultados, para que puedas anotarla y reproducir esa corrida después.
-
-### ✅ Validación del generador
-
-Un buen generador debe ser **uniforme**: todos los valores entre 0 y 1 deben salir con la misma frecuencia. La pestaña **"Generador"** dibuja un histograma de los `u` realmente consumidos, agrupados en 10 deciles (0–0,1, 0,1–0,2, …). Si las barras se acercan a la línea de "frecuencia esperada" y la media muestral está cerca de **0,5**, el generador es confiable.
-
-> 💡 Para período máximo del LCG conviene que: `mcd(c, m) = 1`; que `a − 1` sea divisible por todos los factores primos de `m`; y si `4 | m`, entonces `4 | (a − 1)`. (Condiciones de Hull-Dobell.)
+```
+src/
+├── generators/
+│   ├── index.js                # Factory: createGenerator() devuelve el generador activo
+│   └── mixedCongruential.js    # Implementación del Congruencial Mixto con mulmod
+│
+├── simulation/
+│   ├── distribution.js         # Funciones de distribución + tablas de probabilidad
+│   └── naveTierra.js           # Motor de simulación: loop principal de 30 días
+│
+└── routes/
+    ├── simulation.js           # POST /api/simulate/naveTierra
+    └── distributions.js        # Utilidades de distribución (uso interno)
+```
 
 ---
 
-## 🖱️ Cómo usar la aplicación, paso a paso
+## 3. Generación de números pseudoaleatorios
 
-La app tiene **4 secciones**, accesibles desde la barra lateral izquierda:
+### ¿Por qué es necesario un generador?
+
+La simulación de Montecarlo se basa en reproducir la aleatoriedad del mundo real mediante computadora. Sin embargo, las computadoras son determinísticas: no pueden generar números verdaderamente aleatorios. En su lugar, se usan **generadores de números pseudoaleatorios (PRNG)** que producen secuencias de números que *parecen* aleatorios y tienen propiedades estadísticas similares a la distribución uniforme.
+
+Todos los eventos estocásticos del simulador (llegada de lotes, tipo de equipo, destino, tiempos de proceso) se modelan mediante números **u ∈ [0, 1)** generados por el PRNG, que luego se transforman en valores concretos usando las distribuciones de probabilidad correspondientes.
+
+### Método implementado: Congruencial Mixto (LCG)
+
+El **Generador Congruencial Mixto** (Linear Congruential Generator) es el algoritmo más utilizado en simulaciones industriales y es el que implementa el presente simulador.
+
+#### Fórmula
 
 ```
- 🏠 Bienvenida  →  🔗 Modelo  →  ⚙️ Configuración  →  📊 Resultados
+Xₙ₊₁ = (a · Xₙ + c) mod m
 ```
 
-### Paso 1 · Bienvenida
-Pantalla de inicio del TFI. Hacé clic en **"Comenzar"** para ir a la configuración.
+Donde el número aleatorio generado en cada paso es:
 
-### Paso 2 · Modelo (opcional, recomendado)
-Muestra el **diagrama de flujo** de la planta y la **tabla de las 9 distribuciones**. Sirve para entender qué se está simulando antes de ejecutar.
+```
+uₙ = Xₙ / m         (uₙ ∈ [0, 1))
+```
 
-### Paso 3 · Configuración
-Acá preparás la corrida. Vas a ver:
-- **General**: días de simulación (fijo en 30) y un resumen de los parámetros del modelo.
-- **Distribución de Tipos**: probabilidades de cada tipo de equipo y destino.
-- **Generador RNG**: la fórmula del Congruencial Mixto.
-- **Parámetros y Semilla**: acá **ingresás los valores**:
-  - **Semilla** → un número positivo, o dejala vacía para que sea aleatoria.
-  - **Multiplicador `a`**, **Incremento `c`**, **Módulo `m`** → los tres son **obligatorios** y deben ser números positivos.
-- **Eficacia y Ambiente**: porcentajes de éxito, litros de agua evitada y umbrales de decisión.
-- **Parámetros avanzados** (botón desplegable): el detalle completo de todas las distribuciones del modelo.
+#### Variables y sus roles
 
-Cuando todo esté completo, hacé clic en **"Ejecutar Simulación"**. Si falta un parámetro, el campo se marca en rojo con un mensaje. El botón **"Reiniciar"** limpia todo y vuelve al inicio.
+| Variable | Nombre | Descripción |
+|----------|--------|-------------|
+| **X₀** | **Semilla** | Valor inicial de la secuencia. Determinista: la misma semilla siempre produce los mismos números (reproducibilidad). |
+| **a** | **Multiplicador** | Factor de amplificación. Define cuánto "salta" el generador en cada paso. |
+| **c** | **Incremento** | Desplazamiento constante. Garantiza que el generador no quede atascado en 0. |
+| **m** | **Módulo** | Espacio de estados. Define el máximo valor posible de Xₙ y por ende el período. |
+| **Xₙ** | **Estado actual** | Valor interno del generador en el paso n. |
+| **uₙ** | **Número aleatorio** | Resultado normalizado ∈ [0, 1) que se entrega a las distribuciones. |
 
-> Mientras se calcula, el botón muestra *"Simulando…"*. La app le envía tu configuración al servidor, que corre la simulación y devuelve los resultados.
+#### ¿Qué provoca la semilla?
 
-### Paso 4 · Resultados
-Cuando termina, te lleva automáticamente al **tablero de resultados** (ver siguiente sección). Arriba a la derecha verás un distintivo con el método y la **semilla usada** (en naranja si fue aleatoria, en verde si la elegiste vos).
+La semilla (X₀) es el **punto de arranque de toda la secuencia**. Dado que el algoritmo es determinístico, si se usa la misma semilla con los mismos parámetros `(a, c, m)`, la simulación producirá exactamente los mismos resultados en cada ejecución.
+
+- **Semilla manual**: permite **reproducibilidad**. Útil para comparar el efecto de cambiar parámetros del modelo manteniendo el mismo flujo de aleatoriedad, o para depurar resultados.
+- **Semilla aleatoria**: el sistema genera automáticamente un número aleatorio en `[0, m)` usando `Math.random()` de JavaScript. Cada corrida produce resultados distintos, simulando condiciones reales variables.
+
+#### Restricciones de la semilla
+
+La semilla **debe satisfacer** `0 ≤ X₀ < m`. Si X₀ ≥ m, la operación módulo la reduciría a un valor menor al primer paso, lo que hace redundante el valor ingresado y puede provocar colisiones con otros estados de la secuencia.
+
+#### Condiciones para período máximo (m pasos antes de repetirse)
+
+Para que el LCG genere todos los valores en [0, m) antes de ciclar, deben cumplirse el **Teorema de Hull-Dobell**:
+
+1. `mcd(c, m) = 1` — c y m deben ser coprimos.
+2. `(a - 1)` debe ser divisible por todos los factores primos de m.
+3. Si `4 | m`, entonces `4 | (a - 1)`.
+
+#### Ejemplo con parámetros clásicos
+
+```
+a = 1.664.525
+c = 1.013.904.223
+m = 4.294.967.296 (= 2³²)
+X₀ = cualquier entero en [0, 2³²)
+```
+
+Estos son los parámetros de la función `rand()` de Borland C++, con período máximo de 2³² ≈ 4.294 millones de pasos.
+
+#### Implementación: `mulmod` para evitar desbordamiento
+
+La multiplicación `a · Xₙ` puede superar `Number.MAX_SAFE_INTEGER` (≈ 9×10¹⁵) cuando `a` y `m` son grandes. Para resolverlo sin recurrir a BigInt (que el transpilador Babel legacy no soporta), se implementó el algoritmo **binary double-and-add**:
+
+```javascript
+// Calcula (a * b) mod m exactamente para cualquier a, b, m ≤ 2⁵³
+function mulmod(a, b, m) {
+  let result = 0
+  while (b > 0) {
+    if (b % 2 === 1) result = (result + a) % m
+    a = (a * 2) % m
+    b = Math.floor(b / 2)
+  }
+  return result
+}
+```
 
 ---
 
-## 📊 Cómo leer los resultados
+## 4. Distribuciones de probabilidad aplicadas
 
-El tablero tiene **5 pestañas** y un **glosario lateral** siempre visible.
+Cada número `u ∈ [0, 1)` generado por el LCG se transforma en un valor concreto del modelo mediante una distribución de probabilidad. A continuación, todas las distribuciones utilizadas:
 
-### Pestaña 1 · Resumen
-La vista general de un vistazo:
-- **5 indicadores clave (KPIs)**: Total de Equipos, Peso Total (en toneladas), Agua Evitada (en miles de litros), % Correcto y % Incidentes.
-- **6 contadores de destino y tipo**: Funcionales (EF), Desarme (ED), Desecho (EI), Servidores (CS), Switch/Router (CR), Hogareños (ER).
-- **2 gráficos de dona**: reparto por **tipo de equipo** y por **destino**.
-- **Gráfico de líneas acumulado**: cómo crecen, día a día, el total de equipos procesados y el agua evitada a lo largo del mes.
+### 4.1 Distribución Exponencial — Tiempo entre arribos
 
-### Pestaña 2 · Desglose diario
-Tabla con una **fila por cada uno de los 30 días**: lotes, equipos, tipos, pesos, destinos, incidentes, agua y tiempos, con su **fila de totales**. Ideal para ver la evolución diaria en detalle.
+```
+T = -media · ln(u)         u ∈ (0, 1)
+```
 
-### Pestaña 3 · Grilla de eventos
-La tabla más detallada: **una fila por cada equipo procesado**, mostrando para cada variable **el número aleatorio `u` que se usó** y **el valor resultante** (tipo, peso, tiempos, destino, resultado, agua). Es el "vector de estado" completo de la simulación e incluye un paginador para recorrer miles de filas. Muestra también el total de números aleatorios consumidos.
+| Parámetro | Valor | Descripción |
+|-----------|-------|-------------|
+| Media | 80 minutos | Tiempo promedio entre llegadas de lotes |
 
-### Pestaña 4 · Decisiones
-Las **tres recomendaciones de gestión** evaluadas con la lógica *si-entonces*. Cada tarjeta indica la condición, el valor obtenido, el umbral y una recomendación en texto claro, marcada como **"CONDICIÓN CUMPLIDA"** o **"NO CUMPLIDA"**.
+**Uso**: determina cuántos lotes de equipos llegan en un día de 480 minutos. El proceso de arribo sigue una distribución de Poisson, lo que implica que los tiempos entre llegadas son Exponenciales.
 
-### Pestaña 5 · Generador
-La **validación estadística del azar**: histograma de los `u` en 10 deciles contra la frecuencia esperada, más estadísticas (cantidad, media muestral, mínimo, máximo, desvío máximo). Confirma que el generador es uniforme y, por tanto, confiable.
+**Comportamiento**: la mayoría de los lotes llegan aproximadamente cada 80 minutos, pero algunos pueden llegar en 5 minutos y otros en 200 minutos. Esta variabilidad es la que la simulación intenta capturar.
 
 ---
 
-## 📖 Glosario de variables
+### 4.2 Distribución Uniforme Discreta (Entera) — Equipos por lote
 
-Estas siglas aparecen en las tablas y resultados (visibles también en el panel lateral de la app):
+```
+CE = floor(a + (b - a) · u)
+```
 
-<details>
-<summary><b>Control de la simulación</b></summary>
+| Parámetro | Valor | Descripción |
+|-----------|-------|-------------|
+| a (mínimo) | 5 equipos | Cantidad mínima por lote |
+| b (máximo) | 15 equipos | Cantidad máxima por lote |
 
-| Sigla | Significado |
-|-------|-------------|
+**Uso**: cada lote que llega trae entre 5 y 15 equipos. Cualquier cantidad entera en ese rango tiene igual probabilidad de ocurrir.
+
+---
+
+### 4.3 Distribución Normal (Gaussiana) — Tiempo de recepción
+
+```
+Z = √(-2 · ln(u₁)) · cos(2π · u₂)     [Método de Box-Muller]
+TR = μ + σ · Z
+```
+
+| Parámetro | Valor | Descripción |
+|-----------|-------|-------------|
+| μ (media) | 2 minutos | Tiempo promedio de recepción |
+| σ (desvío estándar) | 0.5 minutos | Variabilidad del proceso |
+
+**Uso**: modela el tiempo que un recepcionista tarda en registrar y pesar cada equipo. La mayoría de los equipos se reciben en aproximadamente 2 minutos, con variaciones entre ~1 y ~3 minutos.
+
+**Nota técnica**: el método de Box-Muller requiere **dos** números `u₁` y `u₂` del generador para producir un único valor Normal. Por eso cada equipo consume 2 números aleatorios en esta etapa.
+
+---
+
+### 4.4 Distribución Uniforme Continua — Peso del equipo
+
+```
+P = 0.5 + (20 - 0.5) · u
+```
+
+| Parámetro | Valor | Descripción |
+|-----------|-------|-------------|
+| a (mínimo) | 0.5 kg | Peso mínimo (dispositivo pequeño) |
+| b (máximo) | 20 kg | Peso máximo (servidor rack) |
+
+**Uso**: estima el peso bruto del equipo para calcular el peso total procesado en el período (PT).
+
+---
+
+### 4.5 Distribución Uniforme Continua — Tiempo de diagnóstico
+
+```
+TD = 3 + (15 - 3) · u
+```
+
+| Parámetro | Valor | Descripción |
+|-----------|-------|-------------|
+| a (mínimo) | 3 minutos | Diagnóstico más rápido |
+| b (máximo) | 15 minutos | Diagnóstico más lento |
+
+**Uso**: tiempo que tarda el técnico en evaluar el estado del equipo y determinar su destino.
+
+---
+
+### 4.6 Distribución Uniforme Continua — Tiempo de desarme
+
+```
+TDD = 5 + (60 - 5) · u
+```
+
+| Parámetro | Valor | Descripción |
+|-----------|-------|-------------|
+| a (mínimo) | 5 minutos | Desarme simple |
+| b (máximo) | 60 minutos | Desarme complejo |
+
+**Uso**: se aplica **únicamente** a los equipos que van a desarme (ED). Modela el tiempo que tarda un operario en desmontar el equipo para recuperar sus componentes.
+
+---
+
+### 4.7 Distribución Binomial Empírica (Tabla) — Tipo de equipo
+
+Implementada como **función de distribución acumulada inversa** sobre una tabla discreta:
+
+| u ∈ rango | Tipo | Probabilidad |
+|-----------|------|-------------|
+| u ≤ 0.25 | Servidor (Tipo 1) | 25% |
+| u ≤ 0.70 | Switch/Router (Tipo 2) | 45% |
+| u ≤ 1.00 | Hogareño (Tipo 3) | 30% |
+
+**Uso**: clasifica cada equipo recibido en uno de los tres tipos. El litros de agua evitada depende del tipo.
+
+---
+
+### 4.8 Distribución Binomial Empírica (Tabla) — Destino del equipo
+
+| u ∈ rango | Destino | Probabilidad |
+|-----------|---------|-------------|
+| u ≤ 0.10 | EF: Funcional (reutilización) | 10% |
+| u ≤ 0.85 | ED: Desarme | 75% |
+| u ≤ 1.00 | EI: Disposición final | 15% |
+
+**Uso**: determina qué ocurre con cada equipo tras el diagnóstico. Solo los equipos ED consumen tiempo adicional de desarme.
+
+---
+
+### 4.9 Distribución Binomial Empírica (Tabla) — Eficacia del procesamiento
+
+| u ∈ rango | Resultado | Probabilidad |
+|-----------|-----------|-------------|
+| u ≤ 0.9905 | OK (correcto) | 99.05% |
+| u ≤ 1.0000 | INCIDENTE | 0.95% |
+
+**Uso**: evalúa si el equipo fue procesado sin incidentes de contaminación (ej: ruptura de batería de litio, derrame de fluido refrigerante). Solo los equipos procesados correctamente contabilizan litros de agua evitados.
+
+---
+
+## 5. Variables del modelo
+
+### Control de la simulación
+
+| Variable | Descripción |
+|----------|-------------|
 | `d` | Día simulado (1 a 30) |
-| `u` | Número aleatorio uniforme (0 ≤ u < 1) |
+| `u` | Número aleatorio uniforme generado por el LCG |
 | `L` | Cantidad de lotes que llegan en el día |
 | `CE` | Cantidad de equipos por lote |
-</details>
 
-<details>
-<summary><b>Tipos de equipo</b></summary>
+### Tipos de equipo procesados
 
-| Sigla | Significado |
-|-------|-------------|
-| Tipo 1 | Servidor (Rack/Blade) |
-| Tipo 2 | Switch / Router industrial |
-| Tipo 3 | Equipo de red hogareño |
+| Variable | Descripción |
+|----------|-------------|
 | `CS` | Cantidad de servidores procesados |
-| `CR` | Cantidad de switch/routers procesados |
+| `CR` | Cantidad de switches/routers procesados |
 | `ER` | Cantidad de equipos hogareños procesados |
-</details>
+| `TEP` | Total de equipos procesados en el período (CS + CR + ER) |
 
-<details>
-<summary><b>Pesos (kg)</b></summary>
+### Pesos
 
-| Sigla | Significado |
-|-------|-------------|
-| `PS` | Peso del servidor — Uniforme(15, 30) |
-| `PR` | Peso del switch/router — Uniforme(3, 8) |
-| `PER` | Peso del equipo hogareño — Normal (Box-Muller, 2 u) |
-| `PT` | Peso total procesado en el período |
-</details>
+| Variable | Descripción |
+|----------|-------------|
+| `P` | Peso individual del equipo (kg) |
+| `PT` | Peso total procesado en el período (kg) |
 
-<details>
-<summary><b>Tiempos (minutos)</b></summary>
+### Tiempos (minutos)
 
-| Sigla | Significado |
-|-------|-------------|
-| `TR` | Tiempo de recepción de un equipo — Normal(μ=2, σ=0,5) |
-| `TD` | Tiempo de diagnóstico — Uniforme(3, 12) |
-| `TDD` | Tiempo de desarme — Uniforme(5, 55) |
-| `TTR` | Tiempo total de recepción acumulado |
+| Variable | Descripción |
+|----------|-------------|
+| `TR` | Tiempo de recepción de un equipo |
+| `TD` | Tiempo de diagnóstico del equipo |
+| `TDD` | Tiempo de desarme (solo equipos ED) |
+| `TTR` | Tiempo total de recepción acumulado del período |
 | `TTD` | Tiempo total de diagnóstico acumulado |
 | `TTDD` | Tiempo total de desarme acumulado |
 | `TT` | Tiempo total operativo (TTD + TTDD) |
-</details>
+| `TTR_hs` | TTR convertido a horas |
+| `TT_hs` | TT convertido a horas |
 
-<details>
-<summary><b>Destino del diagnóstico</b></summary>
+### Destino
 
-| Sigla | Significado |
-|-------|-------------|
-| `EF` | Equipos funcionales — se reutilizan (~10 %) |
-| `ED` | Equipos para desarme (~75 %) |
-| `EI` | Equipos irrecuperables — disposición final (~15 %) |
-</details>
+| Variable | Descripción |
+|----------|-------------|
+| `EF` | Equipos funcionales → reutilización directa |
+| `ED` | Equipos para desarme (recuperación de partes) |
+| `EI` | Equipos irrecuperables → disposición final |
 
-<details>
-<summary><b>Calidad e impacto ambiental</b></summary>
+### Calidad e impacto ambiental
 
-| Sigla | Significado |
-|-------|-------------|
-| `PC` | Equipos procesados correctamente (sin incidente) |
-| `PE` | Incidentes de contaminación (~0,95 %) |
+| Variable | Descripción |
+|----------|-------------|
+| `PE` | Incidentes de contaminación |
 | `TA` | Litros de agua no contaminada (impacto evitado) |
-| `TEP` | Total de equipos procesados en el período |
-</details>
+
+**Litros de agua evitados por tipo de equipo (procesado correctamente)**:
+
+| Tipo | Litros evitados |
+|------|----------------|
+| Servidor (Tipo 1) | 50.000 L |
+| Switch/Router (Tipo 2) | 15.000 L |
+| Hogareño (Tipo 3) | 3.000 L |
 
 ---
 
-## 🛠️ Para técnicos: arquitectura y stack
+## 6. Gráficos del tablero de resultados
 
-### Visión general
-
-Esta es la **capa de presentación (frontend)** de una aplicación cliente-servidor. **No contiene la lógica de simulación**: arma la configuración, la envía a una API REST y renderiza la respuesta.
-
-```
-┌──────────────────────────┐      POST /api/simulate/naveTierra        ┌──────────────────────┐
-│   Frontend (este repo)    │  ─────────────────────────────────────▶  │  Backend (API REST)  │
-│   React 19 + Vite 8       │     { method, seed, params:{a,c,m} }      │  Motor de simulación │
-│   (Netlify)               │  ◀─────────────────────────────────────  │  (Render u otro)     │
-└──────────────────────────┘      { dias, resumen, grilla, rng… }       └──────────────────────┘
-```
-
-### Stack tecnológico
-
-| Categoría | Tecnología | Versión | Para qué |
-|-----------|-----------|:---:|----------|
-| Librería UI | **React** | 19 | Componentes e interfaz |
-| Build tool / dev server | **Vite** | 8 | Bundling y HMR |
-| Compilador | **React Compiler** (Babel) | 1.0 | Optimización automática de renders |
-| Gráficos | **Chart.js** + **react-chartjs-2** | 4 / 5 | Donas, líneas, barras, histograma |
-| UI / estilos base | **Bootstrap** + **react-bootstrap** | 5 / 2 | Utilidades |
-| Iconos | **lucide-react** | 1.17 | Iconografía |
-| Estilos propios | **CSS Modules** + CSS global | — | Tema oscuro y layout |
-| Linter | **ESLint** | 10 | Calidad de código |
-| Hosting | **Netlify** | — | Despliegue del frontend (SPA) |
-
-### Patrón de diseño
-
-El proyecto separa estrictamente **lógica** de **presentación** mediante **custom hooks**:
-
-- **Componentes** (`src/components/`): solo renderizan (JSX) y reciben props. Casi sin lógica.
-- **Hooks** (`src/hooks/`): concentran estado, validaciones, transformación de datos y configuración de gráficos. Todo lo "pensante" vive acá.
-
-Esto hace el código testeable, reutilizable y fácil de mantener. Por ejemplo, `useDonutsDestino` arma los datos y opciones de los gráficos de dona, y el componente `DonutsDestino` solo los dibuja.
-
-La navegación es un **enrutador manual por estado** (no usa React Router): `useSimulacion` mantiene la vista activa (`bienvenida` → `modelo` → `configuracion` → `resultados`) y `App.jsx` renderiza la pantalla correspondiente con un `switch`.
+El tablero de resultados se organiza en **5 pestañas**. A continuación, se explica cada gráfico en detalle.
 
 ---
 
-## 📁 Estructura del proyecto
+### Pestaña "Resumen"
 
-```
-.
-├── index.html                  # Punto de entrada HTML (fuentes, metadatos, #root)
-├── vite.config.js              # Config de Vite + React Compiler
-├── netlify.toml                # Build y fallback SPA para Netlify
-├── eslint.config.js            # Reglas de ESLint
-├── .env.example                # Plantilla de variables de entorno
-│
-├── public/                     # Assets estáticos (favicon, íconos)
-│
-└── src/
-    ├── main.jsx                # Bootstrap de React + registro de Chart.js
-    ├── App.jsx                 # Layout raíz + enrutado por estado
-    ├── index.css / App.css     # Tema oscuro global y variables CSS
-    │
-    ├── components/
-    │   ├── Sidebar/            # Barra de navegación lateral
-    │   ├── Bienvenida/         # Pantalla de inicio
-    │   ├── Modelo/             # Diagrama de flujo + distribuciones
-    │   ├── EntradasSimulador/  # Formulario de configuración
-    │   │   ├── EntradasSimulador.jsx
-    │   │   └── ParametrosAvanzados.jsx
-    │   └── ResultadosSimulador/
-    │       ├── ResultadosSimulador.jsx   # Contenedor + pestañas
-    │       ├── DonutsDestino.jsx         # Donas por tipo y destino
-    │       ├── AcumuladoMensual.jsx      # Línea acumulada mensual
-    │       ├── EquiposPorDia.jsx         # Barras apiladas por día
-    │       ├── DesgloseDiario.jsx        # Tabla diaria
-    │       ├── GrillaEventos.jsx         # Tabla equipo por equipo (vector de estado)
-    │       ├── DecisionesDetalle.jsx     # Tarjetas de decisión IF-THEN
-    │       ├── HistogramaGenerador.jsx   # Histograma de validación del RNG
-    │       ├── GlosarioVariables.jsx     # Panel lateral de siglas
-    │       └── chartSetup.js             # Registro y tema global de Chart.js
-    │
-    └── hooks/                  # Toda la lógica (estado + transformación de datos)
-        ├── useSimulacion.js          # Vista activa + fetch a la API + estados de carga/error
-        ├── useEntradasSimulador.js   # Estado del form, validación y armado del payload
-        ├── useParametrosAvanzados.js # Toggle del panel avanzado
-        ├── useResultados.js          # Pestañas + formateo + % OK/incidentes
-        ├── useDesgloseDiario.js      # Totales del desglose diario
-        ├── useGrillaEventos.js       # Paginación y formateo de la grilla
-        ├── useDonutsDestino.js       # Datos/opciones de las donas
-        ├── useAcumuladoMensual.js    # Datos/opciones de la línea acumulada
-        ├── useEquiposPorDia.js       # Datos/opciones de barras apiladas
-        ├── useHistogramaGenerador.js # Cálculo de deciles y estadísticas del RNG
-        └── useGlosario.js            # Definiciones de variables del glosario
-```
+#### 6.1 KPIs superiores
+
+Cinco indicadores en tarjetas destacadas al tope de la pantalla:
+
+| KPI | Qué muestra |
+|-----|-------------|
+| **Total Equipos** | TEP total del mes |
+| **Peso Total** | PT en toneladas |
+| **Agua Evitada** | TA en miles de litros |
+| **Correcto** | % de equipos procesados sin incidente |
+| **Incidentes** | % de equipos con incidente de contaminación |
+
+#### 6.2 Gráfico de Donas — Distribución por tipo de equipo
+
+**Tipo**: Doughnut chart (Chart.js)
+
+**Qué muestra**: la proporción real de servidores, switches/routers y equipos hogareños que procesó la planta durante todo el mes.
+
+**Por qué es útil**: permite verificar visualmente la **Ley de los Grandes Números**. Con suficientes equipos, la proporción simulada debe converger a los valores del modelo (25% / 45% / 30%). Si el modelo fuera correcto y el generador RNG fuera uniforme, la dona debería mostrar esas proporciones.
+
+**Cómo interpretarlo**:
+- Secciones cercanas a los porcentajes del modelo → el generador produce buena uniformidad.
+- Desviaciones grandes → posible falla del generador (período corto, mala semilla) o muestra pequeña.
+
+#### 6.3 Gráfico de Donas — Distribución por destino
+
+**Tipo**: Doughnut chart (Chart.js)
+
+**Qué muestra**: la proporción real de equipos que terminaron en cada destino (EF, ED, EI) durante el mes.
+
+**Por qué es útil**: igual que el anterior, valida que la distribución empírica del modelo (10% / 75% / 15%) se aproxima en la simulación.
+
+#### 6.4 Gráfico de Líneas Acumulado Mensual
+
+**Tipo**: Line chart con dos ejes Y (Chart.js)
+
+**Qué muestra**:
+- **Línea verde** (eje izquierdo): TEP acumulado día a día (equipos totales procesados desde el día 1 hasta el día actual).
+- **Línea cyan** (eje derecho): Litros de agua no contaminada acumulados.
+
+**Cómo interpretarlo**:
+- **Pendiente constante**: la planta trabaja de manera estable, sin días extremadamente ocupados ni vacíos.
+- **Pendiente más pronunciada** en ciertos días: llegaron más lotes o los lotes tenían más equipos (variabilidad natural de la distribución exponencial de arribos).
+- **Achatamiento**: día con pocos lotes. No necesariamente es un problema operativo, sino la variabilidad propia del proceso de Poisson.
 
 ---
 
-## 🔑 Principales funciones y métodos
+### Pestaña "Desglose Diario"
 
-Como toda la lógica vive en los **hooks** (`src/hooks/`), esta sección documenta las funciones más importantes de cada uno. Para quien no programa: pensá cada función como un "engranaje" que hace una tarea concreta dentro de la máquina.
+#### 6.5 Tabla de indicadores por día
 
-### 🎛️ `useSimulacion` — orquestador principal
-Controla qué pantalla se ve y la comunicación con el servidor.
+**Tipo**: Tabla paginada con fila de totales.
 
-| Función / valor | Qué hace |
-|---|---|
-| `ejecutarSimulacion(config)` | Envía la configuración al backend (`POST /simulate/naveTierra`), maneja los estados de carga y error, guarda los resultados y cambia automáticamente a la vista de Resultados. |
-| `reiniciar()` | Borra resultados y errores, y vuelve a la pantalla de Configuración. |
-| `view` / `setView(vista)` | Vista activa actual (`bienvenida`, `modelo`, `configuracion`, `resultados`) y la función para cambiarla. |
-| `cargando` / `error` | Banderas de estado: si la simulación está corriendo y si hubo un error de conexión o del servidor. |
+**Qué muestra**: para cada uno de los 30 días, una fila con los indicadores clave:
 
-### 📝 `useEntradasSimulador` — formulario y validación
-Maneja los datos que ingresa el usuario y construye lo que se envía al servidor.
+| Columna | Descripción |
+|---------|-------------|
+| Día | Número de día (1–30) |
+| Lotes | Cantidad de lotes que llegaron ese día |
+| Equipos | Total de equipos procesados ese día |
+| CS / CR / ER | Equipos por tipo |
+| EF / ED / EI | Equipos por destino |
+| PE | Incidentes ese día |
+| TA (L) | Litros de agua evitados ese día |
+| TTR (min) | Tiempo de recepción ese día |
+| TT (min) | Tiempo operativo total ese día |
 
-| Función / valor | Qué hace |
-|---|---|
-| `handleParamChange(key, val)` | Actualiza un parámetro del generador (`a`, `c`, `m`) y limpia su mensaje de error cuando el valor pasa a ser válido. |
-| `setSemilla(val)` | Actualiza la semilla, aceptando solo números o el campo vacío. |
-| `validate()` | Verifica que los tres parámetros sean números positivos; marca en rojo los que falten. Devuelve `true`/`false`. |
-| `buildPayload()` | Arma el objeto JSON que se manda a la API. **Si la semilla está vacía, genera una aleatoria** (entre 1000 y 100000) y marca `seedWasRandom`. |
-| `handleEjecutar()` | Valida el formulario y, si todo está correcto, dispara `ejecutarSimulacion`. |
-| `isValidNumericInput(str)` | Utilidad: mientras se escribe, permite solo dígitos y un punto decimal. |
-
-> En el formulario, la función `blockInvalidKeys(e)` (en el componente `EntradasSimulador`) refuerza lo anterior **bloqueando a nivel de teclado** cualquier tecla que no sea un número, para impedir entradas inválidas desde el origen.
-
-### 📊 `useResultados` — tablero de resultados
-Controla las pestañas y los cálculos generales del resumen.
-
-| Función / valor | Qué hace |
-|---|---|
-| `tabActivo` / `setTabActivo(id)` | Pestaña visible (`resumen`, `desglose`, `grilla`, `decisiones`, `generador`). |
-| `pctOk` / `pctIncid` | Calculan el **% de equipos correctos** y el **% de incidentes** sobre el total procesado (TEP). |
-| `fmt(n, dec)` | Formatea números al estilo argentino (`es-AR`: punto de miles, coma decimal). |
-
-### 📅 `useDesgloseDiario` — totales del mes
-| Función / valor | Qué hace |
-|---|---|
-| `totales` | Recorre los 30 días y **suma** lotes, equipos, pesos, destinos, incidentes, agua y tiempos para construir la fila de totales. |
-
-### 🔢 `useGrillaEventos` — tabla equipo por equipo
-Maneja la paginación de la grilla, que puede tener miles de filas (una por equipo).
-
-| Función / valor | Qué hace |
-|---|---|
-| `filas` | Porción visible de la grilla según la página actual (desde/cantidad). |
-| `irAnterior()` / `irSiguiente()` | Navegan a la página anterior o siguiente. |
-| `fmtU(v)` | Formatea un número aleatorio `u` con 4 decimales. |
-| `fmt2(v)` / `fmtInt(v)` | Formatean valores con 2 decimales / como número entero. |
-
-### 🍩 Hooks de gráficos
-Cada uno transforma los datos crudos del servidor en el formato que entiende **Chart.js** (devuelven `chartData` + `opciones`):
-
-| Hook | Qué arma |
-|---|---|
-| `useDonutsDestino` | Dos gráficos de dona: reparto por **tipo de equipo** (CS/CR/ER) y por **destino** (EF/ED/EI), con porcentajes en el tooltip. |
-| `useAcumuladoMensual` | Gráfico de líneas de **doble eje**: acumula día a día los equipos procesados y el agua evitada. |
-| `useEquiposPorDia` | Barras **apiladas** por día, separadas por tipo de equipo. |
-| `useHistogramaGenerador` | Agrupa todos los `u` consumidos en **10 deciles**, calcula media, mínimo, máximo y desvío máximo, y los compara contra la frecuencia esperada (validación de uniformidad del RNG). |
-
-### 📖 Hooks auxiliares
-| Hook | Qué hace |
-|---|---|
-| `useGlosario` | Devuelve las definiciones de todas las siglas, agrupadas por categoría, para el panel lateral. |
-| `useParametrosAvanzados` | Expone `toggle()`, que abre/cierra el panel de parámetros avanzados. |
-
-### 🧭 Funciones de navegación (en componentes)
-| Función | Archivo | Qué hace |
-|---|---|---|
-| `renderView()` | `App.jsx` | Decide qué pantalla mostrar según la vista activa (enrutado por estado). |
-| `renderTab()` | `ResultadosSimulador.jsx` | Decide qué pestaña de resultados renderizar según la pestaña activa. |
+**Cómo interpretarlo**:
+- Días con `Lotes = 0`: la distribución exponencial arrojó tiempos de arribo tan largos que ningún lote entró en las 480 minutos del turno.
+- Días con `PE > 0`: ocurrieron incidentes de contaminación.
+- Fila de **TOTALES** al pie: suma de todo el mes, equivalente al Resumen global.
 
 ---
 
-## 🔌 Contrato con la API (backend)
+### Pestaña "Grilla de Eventos"
 
-> El backend **no está en este repositorio**. El frontend solo lo consume.
+#### 6.6 Grilla de auditoría (equipo por equipo)
 
-### Request
+**Tipo**: Tabla paginada, con todos los registros de la simulación.
 
-```http
-POST  {VITE_API_BASE}/simulate/naveTierra
-Content-Type: application/json
+**Qué muestra**: cada fila representa un único equipo procesado, con todos los números aleatorios que se consumieron para tomar las decisiones sobre ese equipo:
+
+| Columna | Descripción |
+|---------|-------------|
+| `#` | Índice global del equipo |
+| `Día / Lote` | Cuándo llegó |
+| `uTipo` | Número aleatorio usado para determinar el tipo |
+| `Tipo` | Tipo resultante (Servidor, Switch, Hogareño) |
+| `uPeso` | Número aleatorio para el peso |
+| `Peso (kg)` | Peso resultante |
+| `uTR1 / uTR2` | Los dos números aleatorios para Box-Muller (tiempo de recepción) |
+| `TR (min)` | Tiempo de recepción resultante |
+| `uTD` | Número aleatorio para diagnóstico |
+| `TD (min)` | Tiempo de diagnóstico resultante |
+| `uDestino` | Número aleatorio para el destino |
+| `Destino` | Destino resultante (EF / ED / EI) |
+| `uTDD` | Número aleatorio para desarme (solo si ED) |
+| `TDD (min)` | Tiempo de desarme resultante |
+| `uEficacia` | Número aleatorio para eficacia |
+| `OK` | Si fue procesado sin incidente |
+| `Agua (L)` | Litros evitados |
+
+**Por qué es útil**: permite **auditar cualquier decisión del simulador**. Si un resultado parece anómalo, se puede rastrear exactamente qué número aleatorio `u` lo provocó y verificar que la distribución se aplicó correctamente.
+
+---
+
+### Pestaña "Decisiones"
+
+#### 6.7 Panel de decisiones gerenciales
+
+**Tipo**: Tarjetas con semáforos de colores.
+
+**Qué muestra**: tres indicadores que evalúan si el resultado del mes activa umbrales que requieren acción gerencial. Cada uno muestra en verde si el umbral no se supera, o en rojo con recomendación si sí.
+
+Ver sección [8. Umbrales de decisión](#8-umbrales-de-decisión) para el detalle de cada uno.
+
+---
+
+### Pestaña "Generador RNG"
+
+#### 6.8 Histograma de uniformidad del generador
+
+**Tipo**: Gráfico de barras con línea de referencia (Chart.js mixed chart)
+
+**Qué muestra**: todos los números `u ∈ [0, 1)` que el generador LCG produjo durante la simulación (potencialmente decenas de miles), agrupados en **10 deciles** (canastos de ancho 0.1 cada uno):
+
+```
+Decil 0.0–0.1: cuántos u cayeron entre 0.0 y 0.1
+Decil 0.1–0.2: cuántos u cayeron entre 0.1 y 0.2
+...
+Decil 0.9–1.0: cuántos u cayeron entre 0.9 y 1.0
 ```
 
-```jsonc
-{
-  "method": "mixedCongruential",  // único método soportado (LCG)
-  "seed": 12345,                  // semilla; si fue aleatoria, la generó el front
-  "seedWasRandom": false,         // true si el usuario dejó la semilla vacía
-  "params": {                     // parámetros del LCG (todos > 0, obligatorios)
-    "a": 1664525,
-    "c": 1013904223,
-    "m": 4294967296
-  }
+La **línea punteada amarilla** marca la frecuencia esperada si el generador fuera perfectamente uniforme (`n / 10` por decil).
+
+**Cómo interpretarlo**:
+
+| Patrón en el histograma | Significado |
+|------------------------|-------------|
+| Barras todas iguales y pegadas a la línea | ✅ Generador con excelente uniformidad |
+| Barras con pequeñas variaciones | ✅ Normal, es muestreo estadístico |
+| 1–3 deciles muy diferentes al resto | ⚠️ Generador con sesgos. Revisar `(a, c, m)` |
+| Varios deciles en 0 (barras vacías) | ❌ Período muy corto. El generador cicló. Cambiar parámetros |
+
+**Panel estadístico adicional** (a la derecha del histograma):
+
+| Estadístico | Significado |
+|------------|-------------|
+| Cantidad (n) | Total de u consumidos en la simulación |
+| Media muestral | Promedio de todos los u. Si el generador es uniforme, debe aproximarse a 0.5 |
+| Media esperada | Siempre 0.5000 para U(0,1) |
+| Mínimo / Máximo | Extremos de la muestra |
+| Frec. esperada / decil | n/10 — frecuencia teórica por canasto |
+| Desvío máx. vs esperado | El canasto más alejado de la frecuencia esperada |
+
+---
+
+## 7. Tablas del simulador
+
+### 7.1 Tabla de distribución de tipos de equipo
+
+Definida en `src/simulation/distribution.js`:
+
+```javascript
+const TABLA_TIPO_DISPOSITIVO = [
+  { value: 1, label: 'Servidor (Rack/Blade)',      cumulative: 0.25 },
+  { value: 2, label: 'Switch / Router Industrial', cumulative: 0.70 },
+  { value: 3, label: 'Equipo de Red Hogareño',     cumulative: 1.00 },
+]
+```
+
+Funciona por **inversión de la FDA**: si u ≤ 0.25 → Servidor; si 0.25 < u ≤ 0.70 → Switch; si u > 0.70 → Hogareño.
+
+### 7.2 Tabla de destino del equipo
+
+```javascript
+const TABLA_DESTINO = [
+  { value: 'EF', label: 'Reutilización (Funcional)',  cumulative: 0.10 },
+  { value: 'ED', label: 'Desarme',                    cumulative: 0.85 },
+  { value: 'EI', label: 'Disposición Final',          cumulative: 1.00 },
+]
+```
+
+### 7.3 Tabla de eficacia del procesamiento
+
+```javascript
+const TABLA_EFICACIA = [
+  { value: 'OK',        label: 'Procesado Correctamente',    cumulative: 0.9905 },
+  { value: 'INCIDENTE', label: 'Incidente de Contaminación', cumulative: 1.0000 },
+]
+```
+
+### 7.4 Tabla de agua evitada por tipo
+
+```javascript
+const AGUA_POR_TIPO = {
+  1: 50000,  // Servidor: 50.000 litros
+  2: 15000,  // Switch/Router: 15.000 litros
+  3: 3000,   // Hogareño: 3.000 litros
 }
 ```
 
-### Response (estructura esperada por el front)
-
-```jsonc
-{
-  "methodName": "Congruencial Mixto (LCG)",
-  "seed": 12345,
-  "seedWasRandom": false,
-
-  "resumen": {
-    "TEP": 0, "PT": 0, "TA": 0, "PE": 0,
-    "EF": 0, "ED": 0, "EI": 0,        // destinos
-    "CS": 0, "CR": 0, "ER": 0,        // tipos
-    "TTR_hs": 0, "TT_hs": 0           // tiempos en horas (para decisiones)
-  },
-
-  "dias": [                          // 30 elementos (uno por día)
-    {
-      "dia": 1, "lotes": 0, "equipos": 0,
-      "CS": 0, "CR": 0, "ER": 0, "PT": 0,
-      "EF": 0, "ED": 0, "EI": 0, "PE": 0,
-      "TA": 0, "TTR": 0, "TT": 0
-    }
-  ],
-
-  "grilla": [                        // una fila por equipo (vector de estado)
-    {
-      "idx": 1, "dia": 1, "lote": 1, "equipoEnLote": 1,
-      "uTipo": 0.0, "tipoLabel": "Servidor",
-      "uPeso": 0.0, "uPeso2": 0.0, "peso": 0.0,
-      "uTR1": 0.0, "uTR2": 0.0, "tr": 0.0,
-      "uTD": 0.0, "td": 0.0,
-      "uDestino": 0.0, "destino": "EF", "destinoLabel": "Reutilización",
-      "uTDD": 0.0, "tdd": 0.0,
-      "uEficacia": 0.0, "ok": true, "agua": 50000
-    }
-  ],
-
-  "decisiones": {                    // booleanos (umbral superado o no)
-    "nuevoRecepcionista": false,
-    "nuevoOperario": false,
-    "segundoTurno": false
-  },
-
-  "rng": {                           // metadatos del generador
-    "type": "Congruencial Mixto (LCG)",
-    "seed": 12345,
-    "totalUConsumidos": 0
-  }
-}
-```
-
-En caso de error, el backend debe responder con un status ≠ 2xx y un cuerpo `{ "error": "mensaje" }`, que el front muestra en pantalla.
+Solo se contabilizan si `eficacia === 'OK'`.
 
 ---
 
-## 🚀 Instalación y ejecución
+## 8. Umbrales de decisión
 
-### Requisitos previos
-- **Node.js** 18 o superior (recomendado 20+)
-- **npm** (incluido con Node)
+La simulación evalúa tres umbrales al finalizar los 30 días:
 
-### Paso a paso
+| Condición | Umbral | Acción recomendada |
+|-----------|--------|-------------------|
+| `TTR_hs > 160` | Tiempo total de recepción > 160 hs/mes | Incorporar nuevo recepcionista |
+| `TT_hs > 160` | Tiempo total operativo (diagnóstico + desarme) > 160 hs/mes | Incorporar nuevo operario |
+| `TEP > 800` | Más de 800 equipos procesados en el mes | Habilitar segundo turno o convenio externo |
+
+Estos umbrales representan aproximadamente la capacidad de un empleado de tiempo completo (160 horas mensuales = 8 hs/día × 20 días hábiles).
+
+---
+
+## 9. Instalación y ejecución local
+
+### Backend
 
 ```bash
-# 1. Clonar el repositorio y entrar a la rama
-git clone <url-del-repo>
-cd <carpeta-del-repo>
-git checkout dev_p
-
-# 2. Instalar dependencias
+cd PF-G04-4K3-PF-Backend
 npm install
-
-# 3. Configurar la variable de entorno
-cp .env.example .env
-# Editá .env y poné la URL real de tu backend:
-#   VITE_API_BASE=https://<tu-servicio>.onrender.com/api
-
-# 4. Levantar el servidor de desarrollo
-npm run dev
+npm run dev          # Inicia en http://localhost:3001
 ```
 
-Luego abrí en el navegador la URL que muestra Vite (por defecto **http://localhost:5173**).
+### Frontend
 
-> ⚠️ **Sin la variable `VITE_API_BASE`**, el front intenta conectarse a `http://localhost:3001/api` (un backend local). Si no tenés backend corriendo, la simulación devolverá un error de conexión — la interfaz funciona, pero no habrá resultados.
-
-### Variables de entorno
-
-| Variable | Descripción | Ejemplo |
-|----------|-------------|---------|
-| `VITE_API_BASE` | URL base de la API de simulación (sin `/` final) | `https://mi-api.onrender.com/api` |
-
-Las variables se cargan en build time con el prefijo `VITE_` (requisito de Vite). El archivo `.env` está en `.gitignore` y **no debe subirse**; `.env.example` sí, como documentación.
-
----
-
-## 📦 Build y despliegue
-
-### Scripts disponibles (`package.json`)
-
-| Comando | Qué hace |
-|---------|----------|
-| `npm run dev` | Servidor de desarrollo con recarga en caliente (HMR) |
-| `npm run build` | Compila la app optimizada para producción en `dist/` |
-| `npm run preview` | Sirve localmente el build de producción para probarlo |
-| `npm run lint` | Ejecuta ESLint sobre todo el proyecto |
-
-### Despliegue en Netlify
-
-El repo ya incluye `netlify.toml` configurado:
-
-```toml
-[build]
-  command = "npm run build"   # genera dist/
-  publish = "dist"
-
-[[redirects]]                 # fallback SPA: cualquier ruta → index.html
-  from   = "/*"
-  to     = "/index.html"
-  status = 200
+```bash
+cd PF-G04-4K3-PF-Frontend
+npm install
+npm run dev          # Inicia en http://localhost:5173
 ```
 
-Pasos:
-1. Conectá el repositorio en Netlify (rama `dev_p` o la que corresponda).
-2. Netlify detecta `netlify.toml` automáticamente.
-3. Definí la variable de entorno **`VITE_API_BASE`** en *Site settings → Environment variables*.
-4. Deploy. La regla de redirect garantiza que la navegación interna funcione (SPA).
-
-> El mismo `dist/` resultante puede servirse desde cualquier hosting estático (Vercel, GitHub Pages, S3, etc.), siempre con el fallback a `index.html`.
+La variable `VITE_API_BASE` no es necesaria en desarrollo local: el hook apunta por defecto a `http://localhost:3001/api`.
 
 ---
 
-## ❓ Preguntas frecuentes
+## 10. Despliegue (Netlify + Render)
 
-**¿Por qué la simulación no devuelve resultados?**
-Casi siempre es porque `VITE_API_BASE` no apunta a un backend activo. Verificá la URL y que el servidor de simulación esté corriendo.
+### Backend → Render
 
-**¿Puedo cambiar las distribuciones, probabilidades o umbrales?**
-No desde la web: son parámetros fijos del **modelo en el backend**. La app solo permite configurar el **generador** (`a`, `c`, `m`, semilla).
+| Campo | Valor |
+|-------|-------|
+| Runtime | Node |
+| Build Command | `npm install` |
+| Start Command | `npm start` |
+| Variable de entorno | `NODE_ENV=production` |
 
-**¿Por qué siempre son 30 días?**
-El horizonte de simulación está fijado en 30 días laborables de 8 hs, según el enunciado del TFI.
+### Frontend → Netlify
 
-**Puse la misma semilla y mismos parámetros, ¿por qué da igual que antes?**
-Es lo esperado y deseado: el generador es **determinista**. Esa reproducibilidad es una característica, no un error.
+| Campo | Valor |
+|-------|-------|
+| Build Command | `npm run build` |
+| Publish Directory | `dist` |
+| Variable de entorno | `VITE_API_BASE=https://<tu-servicio>.onrender.com/api` |
 
-**¿Qué pasa si dejo la semilla vacía?**
-El front genera una semilla aleatoria (1000–100000) y te la muestra en los resultados para que puedas reproducir esa corrida.
+> ⚠️ **Importante**: en Netlify, las variables `VITE_*` solo se inyectan en tiempo de build. Después de configurar la variable, es necesario triggerear un nuevo deploy desde el panel de Netlify.
+
+El archivo `netlify.toml` en la raíz del frontend configura automáticamente el redirect SPA necesario para que todas las rutas sirvan `index.html`.
 
 ---
 
-## 👥 Créditos
+## Stack tecnológico
 
-**Trabajo Final Integrador (TFI)** — Grupo **G04**, comisión **4K3**
-**Universidad Tecnológica Nacional — Facultad Regional Tucumán (UTN-FRT)**
-Caso: planta de reciclaje de RAEE **"Nave Tierra"**, San Miguel de Tucumán.
+### Frontend
+- **React 19** + **Vite 8**
+- **Chart.js** (gráficos de líneas, barras e histograma)
+- **Recharts** (gráficos de eficacia operativa)
+- **Lucide React** (iconografía)
+- **CSS Modules** + variables CSS globales
 
-> Proyecto académico de la asignatura de Simulación. El frontend documentado aquí corresponde a la rama `dev_p`.
+### Backend
+- **Express 5**
+- **Babel** (transpilación ES Modules)
+- **Nodemon** (desarrollo)
+- **CORS** abierto (API pública sin datos sensibles)
+
+---
+
+*Proyecto Final — Simulación · Grupo 04 · 4K3*
