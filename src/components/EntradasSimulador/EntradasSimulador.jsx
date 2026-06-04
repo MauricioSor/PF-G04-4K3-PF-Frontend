@@ -41,7 +41,7 @@ const blockInvalidKeys = (e) => {
 
 const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
   const {
-    semilla, setSemilla,
+    semilla, semillaError, setSemilla,
     params, paramErrors,
     metodoInfo,
     handleParamChange, handleEjecutar,
@@ -209,9 +209,13 @@ const EntradasSimulador = ({ onEjecutar, onReiniciar, cargando, error }) => {
                 value={semilla}
                 onChange={e => setSemilla(e.target.value)}
                 onKeyDown={blockInvalidKeys}
-                placeholder="Vacío = semilla aleatoria"
+                placeholder="Vacío = semilla aleatoria (0 ≤ X₀ < m)"
+                style={semillaError ? { borderColor: 'rgba(239,68,68,0.7)', boxShadow: '0 0 0 2px rgba(239,68,68,0.18)' } : undefined}
               />
-              <span className="input-hint">Misma semilla → mismos resultados reproducibles</span>
+              {semillaError
+                ? <span className={styles.inputError}>{semillaError}</span>
+                : <span className="input-hint">Misma semilla → mismos resultados reproducibles</span>
+              }
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

@@ -33,6 +33,7 @@ export function useEntradasSimulador(onEjecutar) {
   useEffect(() => { onEjecutarRef.current = onEjecutar }, [onEjecutar])
 
   const [semilla,     setSemillaState] = useState('')
+  const [semillaError, setSemillaError] = useState('')
   const [params,      setParams]       = useState({})
   const [paramErrors, setParamErrors]  = useState({})
 
@@ -42,7 +43,11 @@ export function useEntradasSimulador(onEjecutar) {
 
   /* ── Semilla: solo positivos o vacío (aleatoria al ejecutar) ── */
   const setSemilla = (val) => {
-    if (isValidNumericInput(val)) setSemillaState(val)
+    if (isValidNumericInput(val)) {
+      setSemillaState(val)
+      // Limpiar error de semilla al editar
+      setSemillaError('')
+    }
   }
 
   const handleParamChange = (key, val) => {
@@ -70,6 +75,18 @@ export function useEntradasSimulador(onEjecutar) {
     })
 
     setParamErrors(errors)
+
+    // Validar semilla manual contra el módulo m
+    if (isCompletePositive(semilla)) {
+      const seedVal = parseFloat(semilla)
+      const mVal    = parseFloat(params['m'] ?? '')
+      if (isCompletePositive(params['m']) && seedVal >= mVal) {
+        setSemillaError(`La semilla debe ser menor que el módulo m (${mVal.toLocaleString('es-AR')})`)
+        return false
+      }
+    }
+    setSemillaError('')
+
     return Object.keys(errors).length === 0
   }
 
@@ -81,8 +98,10 @@ export function useEntradasSimulador(onEjecutar) {
 
     const seedWasRandom = !isCompletePositive(semilla)
 
+    /* Semilla aleatoria: siempre en [0, m) para respetar el espacio de estados */
+    const m = parseFloat(params['m'] ?? '0')
     const seed = seedWasRandom
-      ? Math.floor(Math.random() * 99000) + 1000
+      ? Math.floor(Math.random() * m)   // 0 ≤ seed < m
       : parseFloat(semilla)
 
     return { method: metodo, seed, seedWasRandom, params: mergedParams }
@@ -95,6 +114,7 @@ export function useEntradasSimulador(onEjecutar) {
 
   return {
     semilla,
+    semillaError,
     setSemilla,
     metodo,
     params,
