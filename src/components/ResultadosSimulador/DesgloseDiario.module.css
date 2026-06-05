@@ -1,0 +1,14 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.intro {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.chartArea {
+  margin-bottom: 4px;
+}

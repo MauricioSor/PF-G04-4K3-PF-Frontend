@@ -10,7 +10,13 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-*.local
+# Variables de entorno — nunca subir al repo (excepto .example que es documentación)
+.env
+.env.local
+.env.production
+.env.production.local
+# NO ignorar .env.example — es documentación para el equipo
+
 
 # Editor directories and files
 .vscode/*
